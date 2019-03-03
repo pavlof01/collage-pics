@@ -1,0 +1,24 @@
+{
+  "parser": "babel-eslint",
+  "extends": "airbnb",
+  "plugins": ["react-native"],
+  "rules": {
+    "react/destructuring-assignment": "never",
+    "react/require-default-props": 0,
+    "react/jsx-filename-extension": 0,
+    "react/prefer-stateless-function": 0,
+    "react/sort-comp": 0,
+    "no-use-before-define": 0,
+    "no-underscore-dangle": 0,
+    "import/no-extraneous-dependencies": 0,
+    "import/no-cycle": 0,
+    "react-native/no-unused-styles": 1,
+    "new-cap": [
+      "error",
+      {
+        "capIsNewExceptions": ["Record"]
+      }
+    ],
+    "global-require": 0
+  }
+}
