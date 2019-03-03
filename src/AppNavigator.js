@@ -1,16 +1,16 @@
-import { createStackNavigator, createAppContainer } from "react-navigation";
+import { createStackNavigator, createAppContainer } from 'react-navigation';
 
-import Main from "./screens/Main";
+import Main from './screens/Main';
 
 const AppNavigator = createStackNavigator(
   {
     Main: {
-      screen: Main
-    }
+      screen: Main,
+    },
   },
   {
-    headerMode: "float",
-    initialRouteName: "Main"
+    headerMode: 'float',
+    initialRouteName: 'Main',
     // defaultNavigationOptions: {
     //   headerTransparent: true,
     //   headerTintColor: "#ff7e42",
@@ -20,7 +20,7 @@ const AppNavigator = createStackNavigator(
     //     fontSize: fontSize(2)
     //   }
     // }
-  }
+  },
 );
 
 export default createAppContainer(AppNavigator);
