@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { View, Dimensions } from 'react-native';
 import PropTypes from 'prop-types';
-import { DynamicCollage } from 'react-native-images-collage';
+import { DynamicCollage } from '../../components/collage';
 
 export default class Collage extends Component {
   constructor() {

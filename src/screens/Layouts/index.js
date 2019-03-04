@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { View, FlatList, TouchableOpacity } from 'react-native';
 import PropTypes from 'prop-types';
-import { LayoutData, DynamicCollage } from 'react-native-images-collage';
+import { LayoutData, DynamicCollage } from '../../components/collage';
 
 const samplePhoto = require('../../../assets/img/sample.png');
 
