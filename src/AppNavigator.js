@@ -1,11 +1,19 @@
 import { createStackNavigator, createAppContainer } from 'react-navigation';
 
 import Main from './screens/Main';
+import Collage from './screens/Collage';
+import Layouts from './screens/Layouts';
 
 const AppNavigator = createStackNavigator(
   {
     Main: {
       screen: Main,
+    },
+    Collage: {
+      screen: Collage,
+    },
+    Layouts: {
+      screen: Layouts,
     },
   },
   {

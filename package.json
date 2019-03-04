@@ -12,6 +12,7 @@
     "react": "16.6.3",
     "react-native": "0.58.6",
     "react-native-gesture-handler": "^1.0.15",
+    "react-native-images-collage": "^3.2.5",
     "react-navigation": "^3.2.1"
   },
   "devDependencies": {
