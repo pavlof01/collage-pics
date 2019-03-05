@@ -1,8 +1,25 @@
 import React from 'react';
-import { View, Image, StyleSheet } from 'react-native';
+import {
+  View, Image, StyleSheet, TouchableOpacity,
+} from 'react-native';
 import PropTypes from 'prop-types';
 
 import CollageImage from './CollageImage';
+
+const backgroundColor = '#E86571';
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    margin: 1,
+    borderRadius: 2,
+  },
+  item: {
+    flex: 1,
+    backgroundColor,
+
+  },
+});
 
 class DynamicCollage extends React.PureComponent {
   constructor(props) {
@@ -33,9 +50,19 @@ class DynamicCollage extends React.PureComponent {
 
     return matrix.map((element, m, array) => {
       const startIndex = m ? array.slice(0, m).reduce(reducer) : 0;
-
-      const images = this.state.images.slice(startIndex, startIndex + element).map((image, i) => {
+      const imagesArr = this.state.images.concat([]);
+      const countPhoto = matrix.reduce((acc, val) => acc + val);
+      imagesArr.length = countPhoto;
+      imagesArr.fill(null, this.props.images.length);
+      const images = imagesArr.slice(startIndex, startIndex + element).map((image, i) => {
         // Determines if the source is a URL, or local asset
+        if (!image) {
+          return (
+            <TouchableOpacity onPress={() => alert('add photo')} key={i} style={[styles.container]}>
+              <View style={[styles.item]} />
+            </TouchableOpacity>
+          );
+        }
         const source = Number.isInteger(image) ? Image.resolveAssetSource(image) : { uri: image };
 
         return (
@@ -83,11 +110,11 @@ class DynamicCollage extends React.PureComponent {
     const { images, collageWidth, collageHeight } = this.state;
 
     // CHECK IF MATRIX = NUMBER OF PHOTOS
-    if (matrix.reduce((a, b) => a + b, 0) !== images.length) {
-      throw new Error(
-        'Number of images must be equal to sum of matrix. E.g. Matrix = [ 1, 2 ] = 3. Images.length = 3 ',
-      );
-    }
+    // if (matrix.reduce((a, b) => a + b, 0) !== images.length) {
+    //   throw new Error(
+    //     'Number of images must be equal to sum of matrix. E.g. Matrix = [ 1, 2 ] = 3. Images.length = 3 ',
+    //   );
+    // }
 
     return (
       <View
