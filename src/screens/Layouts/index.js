@@ -1,11 +1,22 @@
-import React, { Component } from 'react';
-import { View, FlatList, TouchableOpacity } from 'react-native';
+import React from 'react';
+import {
+  View, FlatList, TouchableOpacity, StyleSheet,
+} from 'react-native';
 import PropTypes from 'prop-types';
-import { LayoutData, DynamicCollage } from '../../components/collage';
+import { LayoutData, StaticCollage } from '../../components/collage';
 
 const samplePhoto = require('../../../assets/img/sample.png');
 
-export default class Layouts extends Component {
+const styles = StyleSheet.create({
+  containerLayout: {
+    marginHorizontal: 5,
+  },
+  isPicked: {
+    borderColor: '#E88C92',
+  },
+});
+
+export default class Layouts extends React.PureComponent {
   static navigationOptions = {
     header: () => null,
   }
@@ -28,21 +39,19 @@ export default class Layouts extends Component {
   }
 
   renderItem = ({ item }) => {
-    const { pickLayout } = this.props;
-    const images = [];
-    const countImages = item.matrix.reduce((acc, val) => acc + val);
-    images.length = countImages;
-    images.fill(samplePhoto, 0, countImages);
+    const { pickLayout, currentLayout, pickedImages } = this.props;
+    const { direction, matrix } = currentLayout;
+    const isPicked = direction === item.direction && matrix === item.matrix;
     return (
-      <TouchableOpacity onPress={() => pickLayout(item)}>
-        <DynamicCollage
+      <TouchableOpacity activeOpacity={1} onPress={() => pickLayout(item)}>
+        <StaticCollage
           width={100}
           height={100}
           direction={item.direction}
-          images={images}
+          images={pickedImages}
           matrix={item.matrix}
           isStaticCollage={false}
-          containerStyle={{ borderWidth: 0, marginHorizontal: 5 }}
+          containerStyle={[styles.containerLayout, isPicked ? styles.isPicked : null]}
         />
       </TouchableOpacity>
     );
@@ -53,9 +62,23 @@ export default class Layouts extends Component {
     return (
       <View>
         <FlatList
+          keyExtractor={(item, index) => `${[...item.matrix]}${index}`}
           renderItem={this.renderItem}
           data={layouts}
           horizontal
+          showsHorizontalScrollIndicator={false}
+          getItemLayout={(data, index) => ({
+            length: 100,
+            offset: 100 * index,
+            index,
+          })}
+          initialNumToRender={10} // 10
+          // removeClippedSubviews // false
+          maxToRenderPerBatch={10} // 10
+          onEndReachedThreshold={0.5}
+          updateCellsBatchingPeriod={50} // 50
+          windowSize={21} // 21
+          // legacyImplementation // false
         />
       </View>
     );
@@ -63,8 +86,5 @@ export default class Layouts extends Component {
 }
 
 Layouts.propTypes = {
-  pickLayout: PropTypes.shape({
-    direction: PropTypes.string,
-    matrix: PropTypes.array,
-  }),
+  pickLayout: PropTypes.func.isRequired,
 };

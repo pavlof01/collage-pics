@@ -1,41 +1,70 @@
 import React from 'react';
-import { View, Image, StyleSheet } from 'react-native';
+import { View, StyleSheet, Image } from 'react-native';
 import PropTypes from 'prop-types';
 
-class StaticCollage extends React.Component {
-  renderMatrix(){
-    const { matrix, direction, imageStyle, seperatorStyle } = this.props;
+const backgroundColor = '#E86571';
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 3.5,
+    borderRadius: 10,
+    borderWidth: 3,
+    borderColor: '#F6F8FA',
+  },
+  item: {
+    flex: 1,
+    backgroundColor,
+    margin: 1,
+    borderRadius: 2,
+  },
+  image: {
+    flex: 1,
+    margin: 1,
+    borderRadius: 2,
+  },
+});
+
+class StaticCollage extends React.PureComponent {
+  renderMatrix() {
+    const {
+      matrix, direction, imageStyle, seperatorStyle,
+    } = this.props;
 
     const reducer = (accumulator, currentValue) => accumulator + currentValue;
-    const sectionDirection = (direction === 'row') ? 'column' : 'row';
+    const sectionDirection = direction === 'row' ? 'column' : 'row';
 
     return matrix.map((element, m, array) => {
       const startIndex = m ? array.slice(0, m).reduce(reducer) : 0;
-
-      const images = this.props.images.slice(startIndex, startIndex + element).map((image, i) => {
-        // Determines if the source is a URL, or local asset
-        const source = !Number.isInteger(image) ? { uri: image } : Image.resolveAssetSource(image);
-
-        return <Image key={i} source={source} style={[ { flex: 1 }, imageStyle ]} />;
+      const imagesArr = this.props.images.concat([]);
+      const countPhoto = matrix.reduce((acc, val) => acc + val);
+      imagesArr.length = countPhoto;
+      imagesArr.fill(null, this.props.images.length);
+      const images = imagesArr.slice(startIndex, startIndex + element).map((image, i) => {
+        if (image) {
+          return <Image key={i} source={{ uri: image }} style={[styles.image, imageStyle]} />;
+        }
+        return <View key={i} style={[styles.item]} />;
       });
 
       return (
-          <View key={m} style={[ { flex: 1, flexDirection: sectionDirection }, seperatorStyle ]}>
-            { images }
-          </View>
+        <View key={m} style={[{ flex: 1, flexDirection: sectionDirection }, seperatorStyle]}>
+          {images}
+        </View>
       );
     });
   }
 
   render() {
-    const { width, height, direction, containerStyle } = this.props;
+    const {
+      width, height, direction, containerStyle,
+    } = this.props;
 
     return (
-        <View style={[ { width, height }, containerStyle ]}>
-          <View style={{ flex: 1, flexDirection: direction }}>
-            { this.renderMatrix() }
-          </View>
+      <View style={[{ width, height }, styles.container, containerStyle]}>
+        <View style={{ flex: 1, flexDirection: direction }}>
+          {this.renderMatrix()}
         </View>
+      </View>
     );
   }
 }
@@ -45,8 +74,8 @@ StaticCollage.defaultProps = {
   direction: 'row',
   // STYLE OF SEPERATORS ON THE COLLAGE
   seperatorStyle: {
-    borderWidth: 2,
-    borderColor: 'white',
+    borderWidth: 0,
+    // borderColor: '#E7E9EB',
   },
 
   // STYLE

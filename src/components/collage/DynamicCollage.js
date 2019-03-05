@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 
 import CollageImage from './CollageImage';
 
-class DynamicCollage extends React.Component {
+class DynamicCollage extends React.PureComponent {
   constructor(props) {
     super(props);
 

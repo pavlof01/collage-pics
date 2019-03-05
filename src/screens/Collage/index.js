@@ -1,9 +1,59 @@
 import React, { Component } from 'react';
-import { View, Dimensions } from 'react-native';
+import {
+  View, Dimensions, StyleSheet, Text,
+} from 'react-native';
 import PropTypes from 'prop-types';
+import {
+  Container, Icon, Button, Right,
+} from 'native-base';
 import { DynamicCollage } from '../../components/collage';
 
+const styles = StyleSheet.create({
+  leftHeaderContainer: {
+    flexDirection: 'row',
+  },
+  collageContainer: {
+    alignSelf: 'center',
+  },
+  collage: {
+    borderWidth: 10,
+    borderColor: '#fff',
+  },
+  body: {
+    backgroundColor: '#E7E9EB',
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
+
 export default class Collage extends Component {
+  static navigationOptions = ({ navigation }) => ({
+    title: null,
+    headerStyle: {
+      backgroundColor: '#E7E9EB',
+    },
+    headerTintColor: '#fff',
+    headerTransparent: true,
+    headerRight: (
+      <View>
+        <Button transparent>
+          <Icon type="AntDesign" name="totop" />
+        </Button>
+      </View>
+    ),
+    headerLeft: (
+      <View style={styles.leftHeaderContainer}>
+        <Button transparent>
+          <Icon type="AntDesign" name="close" />
+        </Button>
+        <Button onPress={() => navigation.goBack()} transparent>
+          <Icon type="AntDesign" name="back" />
+        </Button>
+      </View>
+    ),
+  })
+
   constructor() {
     super();
     this.state = {
@@ -22,16 +72,21 @@ export default class Collage extends Component {
   render() {
     const { pickedImages, currentLayout } = this.state;
     return (
-      <View>
-        <DynamicCollage
-          width={Dimensions.get('window').width}
-          height={Dimensions.get('window').width}
-          direction={currentLayout.direction}
-          images={pickedImages}
-          matrix={currentLayout.matrix}
-          isStaticCollage
-        />
-      </View>
+      <Container>
+        <View style={styles.body}>
+          <View style={styles.collageContainer}>
+            <DynamicCollage
+              width={Dimensions.get('window').width / 1.1}
+              height={Dimensions.get('window').width / 1.1}
+              direction={currentLayout.direction}
+              images={pickedImages}
+              matrix={currentLayout.matrix}
+              isStaticCollage
+              containerStyle={styles.collage}
+            />
+          </View>
+        </View>
+      </Container>
     );
   }
 }

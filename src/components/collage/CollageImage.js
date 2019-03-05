@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import PropTypes from 'prop-types';
 
-class CollageImage extends React.Component {
+class CollageImage extends React.PureComponent {
   constructor(props) {
     super(props);
 

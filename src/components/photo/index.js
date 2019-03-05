@@ -53,7 +53,7 @@ export default class Photo extends Component {
 
 Photo.propTypes = {
   photo: ProptTypes.shape({
-    uri: ProptTypes.string.isRequired,
+    uri: ProptTypes.string,
   }).isRequired,
   onPressImage: ProptTypes.func.isRequired,
 };
