@@ -1,7 +1,10 @@
-import React, { Component } from 'react';
-import { View, Dimensions, StyleSheet } from 'react-native';
+import React from 'react';
+import {
+  View, Dimensions, StyleSheet, CameraRoll, Text, Animated,
+} from 'react-native';
 import PropTypes from 'prop-types';
 import { Container, Icon, Button } from 'native-base';
+import ViewShot from 'react-native-view-shot';
 import { DynamicCollage } from '../../components/collage';
 
 const styles = StyleSheet.create({
@@ -21,6 +24,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  notification: {
+    position: 'absolute',
+    width: 250,
+    height: 50,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 5,
+  },
+  notificationText: {
+    color: '#fff',
+  },
 });
 
 export default class Collage extends React.PureComponent {
@@ -33,7 +49,7 @@ export default class Collage extends React.PureComponent {
     headerTransparent: true,
     headerRight: (
       <View>
-        <Button transparent>
+        <Button onPress={() => navigation.state.params.onCapture()} transparent>
           <Icon type="AntDesign" name="totop" />
         </Button>
       </View>
@@ -55,6 +71,7 @@ export default class Collage extends React.PureComponent {
     this.state = {
       pickedImages: [],
       currentLayout: { direction: 'row', matrix: [] },
+      opacityNotification: new Animated.Value(0),
     };
   }
 
@@ -65,21 +82,59 @@ export default class Collage extends React.PureComponent {
     this.setState({ pickedImages, currentLayout });
   }
 
+  componentDidMount = () => {
+    this.props.navigation.setParams({ onCapture: this.onCapture });
+  }
+
+  showNotification = () => {
+    Animated.sequence([
+      Animated.timing(
+        this.state.opacityNotification,
+        {
+          toValue: 0.85,
+          duration: 300,
+        },
+      ),
+      Animated.timing(
+        this.state.opacityNotification,
+        {
+          delay: 1000,
+          toValue: 0,
+          duration: 1000,
+        },
+      ),
+
+    ]).start();
+  }
+
+
+  onCapture = () => {
+    this.refs.viewShot.capture().then((uri) => {
+      CameraRoll.saveToCameraRoll(uri);
+      this.showNotification();
+    });
+  }
+
   render() {
-    const { pickedImages, currentLayout } = this.state;
+    const { pickedImages, currentLayout, opacityNotification } = this.state;
     return (
       <Container>
         <View style={styles.body}>
           <View style={styles.collageContainer}>
-            <DynamicCollage
-              width={Dimensions.get('window').width / 1.1}
-              height={Dimensions.get('window').width / 1.1}
-              direction={currentLayout.direction}
-              images={pickedImages}
-              matrix={currentLayout.matrix}
-              containerStyle={styles.collage}
-            />
+            <ViewShot ref="viewShot">
+              <DynamicCollage
+                width={Dimensions.get('window').width / 1.1}
+                height={Dimensions.get('window').width / 1.1}
+                direction={currentLayout.direction}
+                images={pickedImages}
+                matrix={currentLayout.matrix}
+                containerStyle={styles.collage}
+              />
+            </ViewShot>
           </View>
+          <Animated.View style={[styles.notification, { opacity: opacityNotification }]}>
+            <Text style={styles.notificationText}>Photo saved to Camera Roll</Text>
+          </Animated.View>
         </View>
       </Container>
     );
