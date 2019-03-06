@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import {
   Text,
   StyleSheet,
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export default class Main extends Component {
+export default class Main extends React.PureComponent {
   static navigationOptions = {
     header: () => null,
   }
@@ -76,8 +76,7 @@ export default class Main extends Component {
     CameraRoll.getPhotos({ groupTypes: 'All', first: 20000 })
       .then((images) => {
         images.edges.forEach(({ node }) => {
-          if (albums.hasOwnProperty(node.group_name)) {
-            //eslint-disable-line
+          if (albums.hasOwnProperty(node.group_name)) {  //eslint-disable-line
             albums[node.group_name].push(node);
           } else {
             albums[node.group_name] = [];
@@ -133,7 +132,7 @@ export default class Main extends Component {
             style={[styles.tabs, isIphoneX() ? { paddingTop: 30 } : null]}
             tabBarBackgroundColor="#E7E9EB"
             prerenderingSiblingsNumber={20}
-            tabBarUnderlineStyle={{ backgroundColor: 'transperent' }}
+            tabBarUnderlineStyle={{ backgroundColor: 'rgba(0,0,0,0)' }}
             renderTabBar={() => <ScrollableTab />}
           >
             {nameAlbums.map(name => (

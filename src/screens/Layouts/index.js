@@ -1,20 +1,8 @@
 import React from 'react';
-import {
-  View, FlatList, TouchableOpacity, StyleSheet,
-} from 'react-native';
+import { View, FlatList } from 'react-native';
 import PropTypes from 'prop-types';
-import { LayoutData, StaticCollage } from '../../components/collage';
-
-const samplePhoto = require('../../../assets/img/sample.png');
-
-const styles = StyleSheet.create({
-  containerLayout: {
-    marginHorizontal: 5,
-  },
-  isPicked: {
-    borderColor: '#E88C92',
-  },
-});
+import { LayoutData } from '../../components/collage';
+import Layout from '../../components/layoutItem';
 
 export default class Layouts extends React.PureComponent {
   static navigationOptions = {
@@ -32,7 +20,7 @@ export default class Layouts extends React.PureComponent {
     const layouts = [];
     /* eslint-disable */
     for (key in LayoutData) {
-      LayoutData[key].forEach(item => layouts.push(item));
+      LayoutData[key].forEach(item => layouts.push(item))
     }
     /* eslint-enable */
     this.setState({ layouts });
@@ -43,17 +31,12 @@ export default class Layouts extends React.PureComponent {
     const { direction, matrix } = currentLayout;
     const isPicked = direction === item.direction && matrix === item.matrix;
     return (
-      <TouchableOpacity activeOpacity={1} onPress={() => pickLayout(item)}>
-        <StaticCollage
-          width={100}
-          height={100}
-          direction={item.direction}
-          images={pickedImages}
-          matrix={item.matrix}
-          isStaticCollage={false}
-          containerStyle={[styles.containerLayout, isPicked ? styles.isPicked : null]}
-        />
-      </TouchableOpacity>
+      <Layout
+        item={item}
+        pickLayout={pickLayout}
+        pickedImages={pickedImages}
+        isPicked={isPicked}
+      />
     );
   }
 
@@ -72,13 +55,7 @@ export default class Layouts extends React.PureComponent {
             offset: 100 * index,
             index,
           })}
-          initialNumToRender={10} // 10
-          // removeClippedSubviews // false
-          maxToRenderPerBatch={10} // 10
           onEndReachedThreshold={0.5}
-          updateCellsBatchingPeriod={50} // 50
-          windowSize={21} // 21
-          // legacyImplementation // false
         />
       </View>
     );
@@ -87,4 +64,6 @@ export default class Layouts extends React.PureComponent {
 
 Layouts.propTypes = {
   pickLayout: PropTypes.func.isRequired,
+  currentLayout: PropTypes.object, //eslint-disable-line
+  pickedImages: PropTypes.array, //eslint-disable-line
 };

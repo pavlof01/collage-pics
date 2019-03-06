@@ -17,7 +17,6 @@ const styles = StyleSheet.create({
   item: {
     flex: 1,
     backgroundColor,
-
   },
 });
 
@@ -41,7 +40,6 @@ class DynamicCollage extends React.PureComponent {
       retainScaleOnSwap,
       longPressDelay,
       longPressSensitivity,
-      isStaticCollage,
     } = this.props;
     const { collageOffsetX, collageOffsetY } = this.state;
 
@@ -90,7 +88,6 @@ class DynamicCollage extends React.PureComponent {
             longPressSensitivity={longPressSensitivity}
             collageOffsetX={collageOffsetX}
             collageOffsetY={collageOffsetY}
-            isStaticCollage={isStaticCollage}
           />
         );
       });

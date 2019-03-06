@@ -70,10 +70,10 @@ class CollageImage extends React.PureComponent {
     this.deltaScaling = 0;
 
     this._panResponder = PanResponder.create({
-      onStartShouldSetPanResponder: (evt, gestureState) => props.isStaticCollage,
-      onStartShouldSetPanResponderCapture: (evt, gestureState) => props.isStaticCollage,
-      onMoveShouldSetPanResponder: (evt, gestureState) => props.isStaticCollage,
-      onMoveShouldSetPanResponderCapture: (evt, gestureState) => props.isStaticCollage,
+      onStartShouldSetPanResponder: (evt, gestureState) => true,
+      onStartShouldSetPanResponderCapture: (evt, gestureState) => true,
+      onMoveShouldSetPanResponder: (evt, gestureState) => true,
+      onMoveShouldSetPanResponderCapture: (evt, gestureState) => true,
       onPanResponderGrant: (e, gestureState) => {
         this.onLongPressTimeout = setTimeout(() => {
           this.setState({ selected: true }, () => {

@@ -1,11 +1,7 @@
 import React, { Component } from 'react';
-import {
-  View, Dimensions, StyleSheet, Text,
-} from 'react-native';
+import { View, Dimensions, StyleSheet } from 'react-native';
 import PropTypes from 'prop-types';
-import {
-  Container, Icon, Button, Right,
-} from 'native-base';
+import { Container, Icon, Button } from 'native-base';
 import { DynamicCollage } from '../../components/collage';
 
 const styles = StyleSheet.create({
@@ -27,7 +23,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export default class Collage extends Component {
+export default class Collage extends React.PureComponent {
   static navigationOptions = ({ navigation }) => ({
     title: null,
     headerStyle: {
@@ -81,7 +77,6 @@ export default class Collage extends Component {
               direction={currentLayout.direction}
               images={pickedImages}
               matrix={currentLayout.matrix}
-              isStaticCollage
               containerStyle={styles.collage}
             />
           </View>
