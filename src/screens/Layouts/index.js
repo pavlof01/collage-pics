@@ -50,9 +50,10 @@ class Layouts extends React.PureComponent {
     const viewableLayouts = [];
     const firstIndex = viewableItems[0].index;
     const lastIndex = viewableItems[viewableItems.length - 1].index;
-    const moreViewableItems = layouts.slice(lastIndex, lastIndex + 3);
+    const forwardItems = layouts.slice(lastIndex, lastIndex + 3);
+    const lastItems = layouts.slice(firstIndex - 3, firstIndex);
     viewableItems.forEach(({ item }) => viewableLayouts.push(item));
-    const largerViewableLayouts = viewableLayouts.concat(moreViewableItems);
+    const largerViewableLayouts = viewableLayouts.concat(forwardItems).concat(lastItems)
     this.setState({ viewableLayouts: largerViewableLayouts });
   }
 
