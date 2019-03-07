@@ -12,7 +12,15 @@ const styles = StyleSheet.create({
   },
 });
 
-export default class LayoutItem extends React.PureComponent {
+export default class LayoutItem extends React.Component {
+  shouldComponentUpdate(nextProps) {
+    const { pickedImages, isPicked } = this.props;
+    if (pickedImages !== nextProps.pickedImages || isPicked !== nextProps.isPicked) {
+      return true;
+    }
+    return false;
+  }
+
   render() {
     const {
       item, pickLayout, pickedImages, isPicked,
