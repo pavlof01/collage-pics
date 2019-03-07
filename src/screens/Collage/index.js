@@ -2,6 +2,7 @@ import React from 'react';
 import {
   View, Dimensions, StyleSheet, CameraRoll, Text, Animated,
 } from 'react-native';
+import { connect } from 'react-redux'
 import PropTypes from 'prop-types';
 import { Container, Icon, Button } from 'native-base';
 import ViewShot from 'react-native-view-shot';
@@ -39,7 +40,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export default class Collage extends React.PureComponent {
+class Collage extends React.PureComponent {
   static navigationOptions = ({ navigation }) => ({
     title: null,
     headerStyle: {
@@ -69,7 +70,6 @@ export default class Collage extends React.PureComponent {
   constructor() {
     super();
     this.state = {
-      pickedImages: [],
       currentLayout: { direction: 'row', matrix: [] },
       opacityNotification: new Animated.Value(0),
     };
@@ -77,9 +77,8 @@ export default class Collage extends React.PureComponent {
 
   componentWillMount = () => {
     const { navigation } = this.props;
-    const pickedImages = navigation.getParam('pickedImages', []);
     const currentLayout = navigation.getParam('layout', []);
-    this.setState({ pickedImages, currentLayout });
+    this.setState({ currentLayout });
   }
 
   componentDidMount = () => {
@@ -116,7 +115,8 @@ export default class Collage extends React.PureComponent {
   }
 
   render() {
-    const { pickedImages, currentLayout, opacityNotification } = this.state;
+    const { currentLayout, opacityNotification } = this.state;
+    const { pickedImages } = this.props
     return (
       <Container>
         <View style={styles.body}>
@@ -148,3 +148,9 @@ Collage.propTypes = {
     }).isRequired,
   }).isRequired,
 };
+
+const mapStateToProps = (state) => ({
+  pickedImages: state.pickedImages
+})
+
+export default connect(mapStateToProps,null)(Collage)

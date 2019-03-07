@@ -9,11 +9,13 @@ import {
   View,
   StatusBar,
 } from 'react-native';
+import { connect } from 'react-redux';
 import {
   Container, Tab, Tabs, Button, ScrollableTab,
 } from 'native-base';
 import { isIphoneX } from 'react-native-iphone-x-helper';
 import PropTypes from 'prop-types';
+import { addPhoto } from '../../actions/pickImages';
 import Photo from '../../components/photo';
 import Layouts from '../Layouts';
 
@@ -56,7 +58,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export default class Main extends React.PureComponent {
+class Main extends React.Component {
   static navigationOptions = {
     header: () => null,
   }
@@ -66,7 +68,6 @@ export default class Main extends React.PureComponent {
     this.state = {
       albums: {},
       loading: true,
-      pickedImages: [],
       currentLayout: { direction: null, matrix: null },
     };
   }
@@ -76,7 +77,8 @@ export default class Main extends React.PureComponent {
     CameraRoll.getPhotos({ groupTypes: 'All', first: 20000 })
       .then((images) => {
         images.edges.forEach(({ node }) => {
-          if (albums.hasOwnProperty(node.group_name)) {  //eslint-disable-line
+          if (albums.hasOwnProperty(node.group_name)) {
+            //eslint-disable-line
             albums[node.group_name].push(node);
           } else {
             albums[node.group_name] = [];
@@ -89,32 +91,20 @@ export default class Main extends React.PureComponent {
 
   renderImageItem = ({ item }) => <Photo onPressImage={this.pickImage} photo={item} />
 
-  pickImage = (uri) => {
-    const { pickedImages } = this.state;
-    const newArray = pickedImages;
-    const isExist = newArray.includes(uri);
-    if (isExist) {
-      const bb = newArray.filter(image => image !== uri);
-      return this.setState({ pickedImages: bb });
-    }
-    return this.setState({ pickedImages: [...newArray, uri] });
-  }
+  pickImage = uri => this.props.addPhotoItem(uri)
 
   pickLayout = (layout) => {
     this.setState({ currentLayout: layout });
   }
 
   goNext = () => {
-    const { pickedImages, currentLayout } = this.state;
+    const { currentLayout } = this.state;
     const { navigation } = this.props;
-    navigation.setParams({ pickedImages: [] });
-    navigation.navigate('Collage', { pickedImages, layout: currentLayout });
+    navigation.navigate('Collage', { layout: currentLayout });
   }
 
   render() {
-    const {
-      albums, loading, currentLayout, pickedImages,
-    } = this.state;
+    const { albums, loading, currentLayout } = this.state;
     const nameAlbums = Object.keys(albums);
     if (loading) {
       return (
@@ -162,19 +152,13 @@ export default class Main extends React.PureComponent {
           </Tabs>
         ) : null}
         <View style={styles.layoutsContainer}>
-          <Layouts
-            pickedImages={pickedImages}
-            pickLayout={this.pickLayout}
-            currentLayout={currentLayout}
-          />
-          {!pickedImages.length || (
-            <View style={styles.selectedContainer}>
-              <Text>{`${pickedImages.length} Photo Selected`}</Text>
-              <Button onPress={this.goNext} style={{ width: 70 }}>
-                <Text>Next</Text>
-              </Button>
-            </View>
-          )}
+          <Layouts pickLayout={this.pickLayout} currentLayout={currentLayout} />
+          <View style={styles.selectedContainer}>
+            {/* <Text>{`${pickedImages.length} Photo Selected`}</Text> */}
+            <Button onPress={this.goNext} style={{ width: 70 }}>
+              <Text>Next</Text>
+            </Button>
+          </View>
         </View>
       </Container>
     );
@@ -188,3 +172,12 @@ Main.propTypes = {
     }),
   }),
 };
+
+const mapDispatchToProps = dispatch => ({
+  addPhotoItem: photo => dispatch(addPhoto(photo)),
+});
+
+export default connect(
+  null,
+  mapDispatchToProps,
+)(Main);

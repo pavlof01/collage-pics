@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, FlatList } from 'react-native';
 import PropTypes from 'prop-types';
+import { connect } from 'react-redux';
 import { LayoutData } from '../../components/collage';
 import Layout from '../../components/layoutItem';
 
-export default class Layouts extends React.PureComponent {
+class Layouts extends React.PureComponent {
   static navigationOptions = {
     header: () => null,
   }
@@ -13,6 +14,7 @@ export default class Layouts extends React.PureComponent {
     super();
     this.state = {
       layouts: [],
+      viewableLayouts:[]
     };
   }
 
@@ -23,10 +25,13 @@ export default class Layouts extends React.PureComponent {
       LayoutData[key].forEach(item => layouts.push(item))
     }
     /* eslint-enable */
-    this.setState({ layouts });
+    const viewableLayouts = layouts.slice(0,6)
+    this.setState({ layouts, viewableLayouts });
   }
 
   renderItem = ({ item }) => {
+    const { viewableLayouts } = this.state
+    const isVisible = viewableLayouts.includes(item)
     const { pickLayout, currentLayout, pickedImages } = this.props;
     const { direction, matrix } = currentLayout;
     const isPicked = direction === item.direction && matrix === item.matrix;
@@ -34,11 +39,17 @@ export default class Layouts extends React.PureComponent {
       <Layout
         item={item}
         pickLayout={pickLayout}
-        pickedImages={pickedImages}
+        pickedImages={isVisible ? pickedImages: []}
         isPicked={isPicked}
       />
     );
   }
+
+  onViewablePhotosChanged = ({ viewableItems, changed }) => {
+    let viewableLayouts = [];
+    viewableItems.forEach(({item}) => viewableLayouts.push(item));
+    this.setState({ viewableLayouts });
+}
 
   render() {
     const { layouts } = this.state;
@@ -50,11 +61,13 @@ export default class Layouts extends React.PureComponent {
           data={layouts}
           horizontal
           showsHorizontalScrollIndicator={false}
-          getItemLayout={(data, index) => ({
-            length: 100,
-            offset: 100 * index,
-            index,
-          })}
+          // getItemLayout={(data, index) => ({
+          //   length: 120,
+          //   offset: 120 * index,
+          //   index,
+          // })}
+          onViewableItemsChanged={this.onViewablePhotosChanged}
+          onEndReached={() => console.warn("onEndReached")}
           onEndReachedThreshold={0.5}
         />
       </View>
@@ -67,3 +80,9 @@ Layouts.propTypes = {
   currentLayout: PropTypes.object, //eslint-disable-line
   pickedImages: PropTypes.array, //eslint-disable-line
 };
+
+const mapStateToProps = (state) => ({
+  pickedImages: state.pickedImages
+})
+
+export default connect(mapStateToProps,null)(Layouts)
