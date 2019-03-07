@@ -151,6 +151,11 @@ export default class Main extends React.PureComponent {
                   extraData={this.state}
                   columnWrapperStyle={{ width }}
                   numColumns={3}
+                  getItemLayout={(data, index) => ({
+                    length: 100,
+                    offset: 100 * index,
+                    index,
+                  })}
                 />
               </Tab>
             ))}

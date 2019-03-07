@@ -42,15 +42,16 @@ export default class Photo extends React.PureComponent {
   pickImage = () => {
     const { selected } = this.state;
     const { photo, onPressImage } = this.props;
-    onPressImage(photo.image.uri);
     this.setState({ selected: !selected });
+    requestAnimationFrame(() => {
+      onPressImage(photo.image.uri);
+    });
   }
 
   render() {
     const { selected } = this.state;
     const { photo } = this.props;
     return (
-      //
       <TouchableOpacity
         onPress={this.pickImage}
         style={[styles.imageContainer, !selected || styles.selected]}
