@@ -8,16 +8,18 @@ import {
   ActivityIndicator,
   View,
   StatusBar,
+  Animated,
 } from 'react-native';
 import { connect } from 'react-redux';
 import {
-  Container, Tab, Tabs, Button, ScrollableTab,
+  Container, Tab, Tabs, ScrollableTab,
 } from 'native-base';
 import { isIphoneX } from 'react-native-iphone-x-helper';
 import PropTypes from 'prop-types';
 import { addPhoto } from '../../actions/pickImages';
 import Photo from '../../components/photo';
 import Layouts from '../Layouts';
+import PhotoSelectedBottomMenu from '../../components/photoSelectedBottomMenu';
 
 const { width } = Dimensions.get('window');
 
@@ -50,12 +52,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 0.3,
     borderTopColor: '#DDDFE0',
   },
-  selectedContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-  },
 });
 
 class Main extends React.Component {
@@ -69,6 +65,8 @@ class Main extends React.Component {
       albums: {},
       loading: true,
       currentLayout: { direction: null, matrix: null },
+      bottomlayoutsContainer: new Animated.Value(-60),
+      opacitylayoutsContainer: new Animated.Value(0),
     };
   }
 
@@ -103,8 +101,24 @@ class Main extends React.Component {
     navigation.navigate('Collage', { layout: currentLayout });
   }
 
+  showPhotoCountSelected = (value, opacity) => {
+    Animated.parallel([
+      Animated.timing(this.state.bottomlayoutsContainer, {
+        toValue: value,
+        duration: 300,
+      }),
+      Animated.timing(this.state.opacitylayoutsContainer, {
+        toValue: opacity,
+        duration: 400,
+      })
+    ]).start();
+    
+  }
+
   render() {
-    const { albums, loading, currentLayout } = this.state;
+    const {
+      albums, loading, currentLayout, bottomlayoutsContainer, opacitylayoutsContainer
+    } = this.state;
     const nameAlbums = Object.keys(albums);
     if (loading) {
       return (
@@ -140,7 +154,7 @@ class Main extends React.Component {
                   renderItem={this.renderImageItem}
                   extraData={this.state}
                   columnWrapperStyle={{ width }}
-                  numColumns={3}
+                  numColumns={4}
                   getItemLayout={(data, index) => ({
                     length: 100,
                     offset: 100 * index,
@@ -151,15 +165,12 @@ class Main extends React.Component {
             ))}
           </Tabs>
         ) : null}
-        <View style={styles.layoutsContainer}>
+        <Animated.View style={[styles.layoutsContainer, { marginBottom: bottomlayoutsContainer }]}>
           <Layouts pickLayout={this.pickLayout} currentLayout={currentLayout} />
-          <View style={styles.selectedContainer}>
-            {/* <Text>{`${pickedImages.length} Photo Selected`}</Text> */}
-            <Button onPress={this.goNext} style={{ width: 70 }}>
-              <Text>Next</Text>
-            </Button>
-          </View>
-        </View>
+          <Animated.View style={{ opacity: opacitylayoutsContainer}}>
+            <PhotoSelectedBottomMenu animate={this.showPhotoCountSelected} goNext={this.goNext} />
+          </Animated.View>
+        </Animated.View>
       </Container>
     );
   }
