@@ -1,7 +1,10 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import PropTypes from 'prop-types';
 import { StaticCollage } from '../collage';
+
+const { width } = Dimensions.get('window');
+const ITEM_SIZE = width / 3 - 10
 
 const styles = StyleSheet.create({
   containerLayout: {
@@ -28,8 +31,8 @@ export default class LayoutItem extends React.Component {
     return (
       <TouchableOpacity activeOpacity={1} onPress={() => pickLayout(item)}>
         <StaticCollage
-          width={100}
-          height={100}
+          width={ITEM_SIZE}
+          height={ITEM_SIZE}
           direction={item.direction}
           images={pickedImages}
           matrix={item.matrix}
