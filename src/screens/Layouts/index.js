@@ -1,9 +1,13 @@
 import React from 'react';
-import { View, FlatList } from 'react-native';
+import { View, FlatList, Dimensions } from 'react-native';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { LayoutData } from '../../components/collage';
 import Layout from '../../components/layoutItem';
+
+const { width } = Dimensions.get('window');
+
+const ITEM_SIZE = width / 3 - 10;
 
 class Layouts extends React.PureComponent {
   static navigationOptions = {
@@ -31,6 +35,7 @@ class Layouts extends React.PureComponent {
 
   renderItem = ({ item }) => {
     const { viewableLayouts } = this.state;
+    const { isShowLayouts } = this.props;
     const isVisible = viewableLayouts.includes(item);
     const { pickLayout, currentLayout, pickedImages } = this.props;
     const { direction, matrix } = currentLayout;
@@ -39,13 +44,13 @@ class Layouts extends React.PureComponent {
       <Layout
         item={item}
         pickLayout={pickLayout}
-        pickedImages={isVisible ? pickedImages : []}
+        pickedImages={isVisible || isShowLayouts ? pickedImages : []}
         isPicked={isPicked}
       />
     );
   }
 
-  onViewablePhotosChanged = ({ viewableItems, changed }) => {
+  onViewablePhotosChanged = ({ viewableItems }) => {
     const { layouts } = this.state;
     const viewableLayouts = [];
     const firstIndex = viewableItems[0].index;
@@ -53,27 +58,30 @@ class Layouts extends React.PureComponent {
     const forwardItems = layouts.slice(lastIndex, lastIndex + 3);
     const lastItems = layouts.slice(firstIndex - 3, firstIndex);
     viewableItems.forEach(({ item }) => viewableLayouts.push(item));
-    const largerViewableLayouts = viewableLayouts.concat(forwardItems).concat(lastItems)
+    const largerViewableLayouts = viewableLayouts.concat(forwardItems).concat(lastItems);
     this.setState({ viewableLayouts: largerViewableLayouts });
   }
 
   render() {
     const { layouts } = this.state;
+    const { isShowLayouts } = this.props;
     return (
       <View>
         <FlatList
+          key={isShowLayouts ? 'v' : 'h'}
           keyExtractor={(item, index) => `${[...item.matrix]}${index}`}
           renderItem={this.renderItem}
           data={layouts}
-          horizontal
+          horizontal={!isShowLayouts}
+          numColumns={isShowLayouts ? 3 : 1}
           showsHorizontalScrollIndicator={false}
           getItemLayout={(data, index) => ({
-            length: 110,
-            offset: 110 * index,
+            length: ITEM_SIZE,
+            offset: ITEM_SIZE * index,
             index,
           })}
-          onViewableItemsChanged={this.onViewablePhotosChanged}
-          onEndReached={() => console.warn('onEndReached')}
+          contentContainerStyle={isShowLayouts ? { paddingBottom: 100 } : null}
+          onViewableItemsChanged={isShowLayouts ? null : this.onViewablePhotosChanged}
           onEndReachedThreshold={0.5}
         />
       </View>

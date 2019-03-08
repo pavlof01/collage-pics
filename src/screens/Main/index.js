@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { connect } from 'react-redux';
 import {
-  Container, Tab, Tabs, ScrollableTab,
+  Container, Tab, Tabs, ScrollableTab, Icon,
 } from 'native-base';
 import { isIphoneX } from 'react-native-iphone-x-helper';
 import PropTypes from 'prop-types';
@@ -21,7 +21,7 @@ import Photo from '../../components/photo';
 import Layouts from '../Layouts';
 import PhotoSelectedBottomMenu from '../../components/photoSelectedBottomMenu';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   tabs: {
@@ -47,10 +47,12 @@ const styles = StyleSheet.create({
   },
   layoutsContainer: {
     backgroundColor: '#F6F8FA',
-    paddingTop: 30,
-    paddingBottom: 30,
+    paddingTop: 20,
     borderTopWidth: 0.3,
     borderTopColor: '#DDDFE0',
+    width,
+    position: 'absolute',
+    bottom: 0,
   },
 });
 
@@ -67,6 +69,8 @@ class Main extends React.Component {
       currentLayout: { direction: null, matrix: null },
       bottomlayoutsContainer: new Animated.Value(-60),
       opacitylayoutsContainer: new Animated.Value(0),
+      layoutsContainerHeight: new Animated.Value(height / 3),
+      isShowLayouts: false,
     };
   }
 
@@ -101,6 +105,28 @@ class Main extends React.Component {
     navigation.navigate('Collage', { layout: currentLayout });
   }
 
+  expandLayouts = () => {
+    Animated.timing(this.state.layoutsContainerHeight, {
+      toValue: height,
+      duration: 300,
+    }).start();
+  }
+
+  unExpandLayouts = () => {
+    Animated.timing(this.state.layoutsContainerHeight, {
+      toValue: height / 3,
+      duration: 300,
+    }).start(() => this.setState({ isShowLayouts: false }));
+  }
+
+  showLayouts = () => {
+    const { isShowLayouts } = this.state;
+    if (isShowLayouts) {
+      return this.unExpandLayouts();
+    }
+    return this.setState({ isShowLayouts: true }, () => this.expandLayouts());
+  }
+
   showPhotoCountSelected = (value, opacity) => {
     Animated.parallel([
       Animated.timing(this.state.bottomlayoutsContainer, {
@@ -110,14 +136,19 @@ class Main extends React.Component {
       Animated.timing(this.state.opacitylayoutsContainer, {
         toValue: opacity,
         duration: 400,
-      })
+      }),
     ]).start();
-    
   }
 
   render() {
     const {
-      albums, loading, currentLayout, bottomlayoutsContainer, opacitylayoutsContainer
+      albums,
+      loading,
+      currentLayout,
+      bottomlayoutsContainer,
+      opacitylayoutsContainer,
+      layoutsContainerHeight,
+      isShowLayouts,
     } = this.state;
     const nameAlbums = Object.keys(albums);
     if (loading) {
@@ -153,7 +184,6 @@ class Main extends React.Component {
                   data={albums[name]}
                   renderItem={this.renderImageItem}
                   extraData={this.state}
-                  columnWrapperStyle={{ width }}
                   numColumns={4}
                   getItemLayout={(data, index) => ({
                     length: 100,
@@ -165,9 +195,31 @@ class Main extends React.Component {
             ))}
           </Tabs>
         ) : null}
-        <Animated.View style={[styles.layoutsContainer, { marginBottom: bottomlayoutsContainer }]}>
-          <Layouts pickLayout={this.pickLayout} currentLayout={currentLayout} />
-          <Animated.View style={{ opacity: opacitylayoutsContainer}}>
+        <Animated.View
+          style={[
+            styles.layoutsContainer,
+            { marginBottom: bottomlayoutsContainer, height: layoutsContainerHeight },
+          ]}
+        >
+          <View>
+            <Icon
+              style={{
+                transform: [{ rotateX: '0deg' }],
+                paddingLeft: 5,
+                color: '#D4AEFF',
+                fontSize: 32,
+              }}
+              onPress={this.showLayouts}
+              type="MaterialIcons"
+              name="keyboard-arrow-up"
+            />
+          </View>
+          <Layouts
+            isShowLayouts={isShowLayouts}
+            pickLayout={this.pickLayout}
+            currentLayout={currentLayout}
+          />
+          <Animated.View style={{ opacity: opacitylayoutsContainer }}>
             <PhotoSelectedBottomMenu animate={this.showPhotoCountSelected} goNext={this.goNext} />
           </Animated.View>
         </Animated.View>
