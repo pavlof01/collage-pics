@@ -22,6 +22,10 @@ import Layouts from '../Layouts';
 import PhotoSelectedBottomMenu from '../../components/photoSelectedBottomMenu';
 
 const { width, height } = Dimensions.get('window');
+const showPhotoCountSelectedDurationAnim = 150
+const expandLayoutsDurationAnim = 300
+const unExpandLayoutsHeight = height / 4.5
+const expandLayoutsHeight = height / 3.6
 
 const styles = StyleSheet.create({
   tabs: {
@@ -67,10 +71,10 @@ class Main extends React.Component {
       albums: {},
       loading: true,
       currentLayout: { direction: null, matrix: null },
-      bottomlayoutsContainer: new Animated.Value(-60),
       opacitylayoutsContainer: new Animated.Value(0),
-      layoutsContainerHeight: new Animated.Value(height / 3),
+      layoutsContainerHeight: new Animated.Value(unExpandLayoutsHeight),
       isShowLayouts: false,
+      isPickedPhotos: false
     };
   }
 
@@ -108,15 +112,21 @@ class Main extends React.Component {
   expandLayouts = () => {
     Animated.timing(this.state.layoutsContainerHeight, {
       toValue: height,
-      duration: 300,
+      duration: expandLayoutsDurationAnim,
     }).start();
   }
 
   unExpandLayouts = () => {
     Animated.timing(this.state.layoutsContainerHeight, {
-      toValue: height / 3,
-      duration: 300,
-    }).start(() => this.setState({ isShowLayouts: false }));
+      toValue: unExpandLayoutsHeight,
+      duration: expandLayoutsDurationAnim,
+    }).start(() => {
+      this.setState({ isShowLayouts: false }, () => {
+        if (this.state.isPickedPhotos){
+          this.showPhotoCountSelected(expandLayoutsHeight, 1);
+        }
+      });
+    });
   }
 
   showLayouts = () => {
@@ -129,28 +139,64 @@ class Main extends React.Component {
 
   showPhotoCountSelected = (value, opacity) => {
     Animated.parallel([
-      Animated.timing(this.state.bottomlayoutsContainer, {
+      Animated.timing(this.state.layoutsContainerHeight, {
         toValue: value,
-        duration: 300,
+        duration: showPhotoCountSelectedDurationAnim,
       }),
       Animated.timing(this.state.opacitylayoutsContainer, {
         toValue: opacity,
-        duration: 400,
+        duration: showPhotoCountSelectedDurationAnim,
       }),
-    ]).start();
+    ]).start(() => this.setState({isPickedPhotos: opacity ? true:false}));
+  }
+
+  rTabs = () => {
+    const { albums } = this.state
+    const nameAlbums = Object.keys(albums);
+    return (
+      <Tabs
+        style={[styles.tabs, isIphoneX() ? { paddingTop: 30 } : null]}
+        tabBarBackgroundColor="#E7E9EB"
+        prerenderingSiblingsNumber={20}
+        tabBarUnderlineStyle={{ backgroundColor: 'rgba(0,0,0,0)' }}
+        renderTabBar={() => <ScrollableTab />}
+      >
+        {nameAlbums.map(name => (
+          <Tab
+            tabStyle={[styles.tabStyle]}
+            activeTabStyle={styles.activeTabStyle}
+            activeTextStyle={styles.activeTextStyle}
+            textStyle={styles.textStyle}
+            key={name}
+            heading={name}
+          >
+            <FlatList
+              keyExtractor={item => `${item.timestamp}`}
+              contentContainerStyle={{paddingBottom: expandLayoutsHeight}}
+              data={albums[name]}
+              renderItem={this.renderImageItem}
+              extraData={this.state}
+              numColumns={4}
+              getItemLayout={(data, index) => ({
+                length: 100,
+                offset: 100 * index,
+                index,
+              })}
+            />
+          </Tab>
+        ))}
+      </Tabs>
+    )
   }
 
   render() {
     const {
-      albums,
       loading,
       currentLayout,
-      bottomlayoutsContainer,
       opacitylayoutsContainer,
       layoutsContainerHeight,
       isShowLayouts,
     } = this.state;
-    const nameAlbums = Object.keys(albums);
     if (loading) {
       return (
         <View style={{ alignItems: 'center' }}>
@@ -162,45 +208,9 @@ class Main extends React.Component {
     return (
       <Container>
         <StatusBar hidden />
-        {nameAlbums.length ? (
-          <Tabs
-            style={[styles.tabs, isIphoneX() ? { paddingTop: 30 } : null]}
-            tabBarBackgroundColor="#E7E9EB"
-            prerenderingSiblingsNumber={20}
-            tabBarUnderlineStyle={{ backgroundColor: 'rgba(0,0,0,0)' }}
-            renderTabBar={() => <ScrollableTab />}
-          >
-            {nameAlbums.map(name => (
-              <Tab
-                tabStyle={[styles.tabStyle]}
-                activeTabStyle={styles.activeTabStyle}
-                activeTextStyle={styles.activeTextStyle}
-                textStyle={styles.textStyle}
-                key={name}
-                heading={name}
-              >
-                <FlatList
-                  keyExtractor={item => `${item.timestamp}`}
-                  data={albums[name]}
-                  renderItem={this.renderImageItem}
-                  extraData={this.state}
-                  numColumns={4}
-                  getItemLayout={(data, index) => ({
-                    length: 100,
-                    offset: 100 * index,
-                    index,
-                  })}
-                />
-              </Tab>
-            ))}
-          </Tabs>
-        ) : null}
-        <Animated.View
-          style={[
-            styles.layoutsContainer,
-            { marginBottom: bottomlayoutsContainer, height: layoutsContainerHeight },
-          ]}
-        >
+        {this.rTabs()}
+        <Animated.View style={[styles.layoutsContainer, { height: layoutsContainerHeight }]}>
+        {/* TODO: REFACTORING */}
           <View>
             <Icon
               style={{
@@ -214,6 +224,7 @@ class Main extends React.Component {
               name="keyboard-arrow-up"
             />
           </View>
+          {/* ------------ */}
           <Layouts
             isShowLayouts={isShowLayouts}
             pickLayout={this.pickLayout}

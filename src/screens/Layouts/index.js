@@ -74,6 +74,7 @@ class Layouts extends React.PureComponent {
           data={layouts}
           horizontal={!isShowLayouts}
           numColumns={isShowLayouts ? 3 : 1}
+          columnWrapperStyle={isShowLayouts ? { paddingBottom: 30 } : null}
           showsHorizontalScrollIndicator={false}
           getItemLayout={(data, index) => ({
             length: ITEM_SIZE,
