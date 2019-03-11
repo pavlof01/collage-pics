@@ -2,7 +2,7 @@ import React from 'react';
 import {
   View, Dimensions, StyleSheet, CameraRoll, Text, Animated,
 } from 'react-native';
-import { connect } from 'react-redux'
+import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Container, Icon, Button } from 'native-base';
 import ViewShot from 'react-native-view-shot';
@@ -72,6 +72,8 @@ class Collage extends React.PureComponent {
     this.state = {
       currentLayout: { direction: 'row', matrix: [] },
       opacityNotification: new Animated.Value(0),
+      opacityCollageContainer: new Animated.Value(0),
+      scaleCollageContainer: new Animated.Value(0),
     };
   }
 
@@ -83,29 +85,35 @@ class Collage extends React.PureComponent {
 
   componentDidMount = () => {
     this.props.navigation.setParams({ onCapture: this.onCapture });
+    this.collageContainerAnim();
   }
 
   showNotification = () => {
     Animated.sequence([
-      Animated.timing(
-        this.state.opacityNotification,
-        {
-          toValue: 0.85,
-          duration: 300,
-        },
-      ),
-      Animated.timing(
-        this.state.opacityNotification,
-        {
-          delay: 1000,
-          toValue: 0,
-          duration: 1000,
-        },
-      ),
-
+      Animated.timing(this.state.opacityNotification, {
+        toValue: 0.85,
+        duration: 300,
+      }),
+      Animated.timing(this.state.opacityNotification, {
+        delay: 1000,
+        toValue: 0,
+        duration: 1000,
+      }),
     ]).start();
   }
 
+  collageContainerAnim = () => {
+    Animated.parallel([
+      Animated.timing(this.state.opacityCollageContainer, {
+        toValue: 1,
+        duration: 450,
+      }),
+      Animated.timing(this.state.scaleCollageContainer, {
+        toValue: 1,
+        duration: 450,
+      }),
+    ]).start();
+  }
 
   onCapture = () => {
     this.refs.viewShot.capture().then((uri) => {
@@ -115,12 +123,25 @@ class Collage extends React.PureComponent {
   }
 
   render() {
-    const { currentLayout, opacityNotification } = this.state;
-    const { pickedImages } = this.props
+    const {
+      currentLayout,
+      opacityNotification,
+      opacityCollageContainer,
+      scaleCollageContainer,
+    } = this.state;
+    const { pickedImages } = this.props;
     return (
       <Container>
         <View style={styles.body}>
-          <View style={styles.collageContainer}>
+          <Animated.View
+            style={[
+              styles.collageContainer,
+              {
+                opacity: opacityCollageContainer,
+                transform: [{ scale: scaleCollageContainer }],
+              },
+            ]}
+          >
             <ViewShot ref="viewShot">
               <DynamicCollage
                 width={Dimensions.get('window').width / 1.1}
@@ -131,7 +152,7 @@ class Collage extends React.PureComponent {
                 containerStyle={styles.collage}
               />
             </ViewShot>
-          </View>
+          </Animated.View>
           <Animated.View style={[styles.notification, { opacity: opacityNotification }]}>
             <Text style={styles.notificationText}>Photo saved to Camera Roll</Text>
           </Animated.View>
@@ -149,8 +170,11 @@ Collage.propTypes = {
   }).isRequired,
 };
 
-const mapStateToProps = (state) => ({
-  pickedImages: state.pickedImages
-})
+const mapStateToProps = state => ({
+  pickedImages: state.pickedImages,
+});
 
-export default connect(mapStateToProps,null)(Collage)
+export default connect(
+  mapStateToProps,
+  null,
+)(Collage);
