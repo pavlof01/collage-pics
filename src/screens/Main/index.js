@@ -22,10 +22,10 @@ import Layouts from '../Layouts';
 import PhotoSelectedBottomMenu from '../../components/photoSelectedBottomMenu';
 
 const { width, height } = Dimensions.get('window');
-const showPhotoCountSelectedDurationAnim = 150
-const expandLayoutsDurationAnim = 300
-const unExpandLayoutsHeight = height / 4.5
-const expandLayoutsHeight = height / 3.6
+const showPhotoCountSelectedDurationAnim = 150;
+const expandLayoutsDurationAnim = 300;
+const unExpandLayoutsHeight = height / 4.5;
+const expandLayoutsHeight = height / 3.6;
 
 const styles = StyleSheet.create({
   tabs: {
@@ -58,6 +58,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
   },
+  arrow: {
+    paddingLeft: 5,
+    color: '#D4AEFF',
+    fontSize: 32,
+  },
 });
 
 class Main extends React.Component {
@@ -74,7 +79,7 @@ class Main extends React.Component {
       opacitylayoutsContainer: new Animated.Value(0),
       layoutsContainerHeight: new Animated.Value(unExpandLayoutsHeight),
       isShowLayouts: false,
-      isPickedPhotos: false
+      isPickedPhotos: false,
     };
   }
 
@@ -106,6 +111,7 @@ class Main extends React.Component {
   goNext = () => {
     const { currentLayout } = this.state;
     const { navigation } = this.props;
+    if (!currentLayout.matrix) return alert('Please pick layout');
     navigation.navigate('Collage', { layout: currentLayout });
   }
 
@@ -122,7 +128,7 @@ class Main extends React.Component {
       duration: expandLayoutsDurationAnim,
     }).start(() => {
       this.setState({ isShowLayouts: false }, () => {
-        if (this.state.isPickedPhotos){
+        if (this.state.isPickedPhotos) {
           this.showPhotoCountSelected(expandLayoutsHeight, 1);
         }
       });
@@ -147,11 +153,11 @@ class Main extends React.Component {
         toValue: opacity,
         duration: showPhotoCountSelectedDurationAnim,
       }),
-    ]).start(() => this.setState({isPickedPhotos: opacity ? true:false}));
+    ]).start(() => this.setState({ isPickedPhotos: !!opacity }));
   }
 
   rTabs = () => {
-    const { albums } = this.state
+    const { albums } = this.state;
     const nameAlbums = Object.keys(albums);
     return (
       <Tabs
@@ -172,7 +178,7 @@ class Main extends React.Component {
           >
             <FlatList
               keyExtractor={item => `${item.timestamp}`}
-              contentContainerStyle={{paddingBottom: expandLayoutsHeight}}
+              contentContainerStyle={{ paddingBottom: expandLayoutsHeight }}
               data={albums[name]}
               renderItem={this.renderImageItem}
               extraData={this.state}
@@ -186,7 +192,7 @@ class Main extends React.Component {
           </Tab>
         ))}
       </Tabs>
-    )
+    );
   }
 
   render() {
@@ -210,21 +216,18 @@ class Main extends React.Component {
         <StatusBar hidden />
         {this.rTabs()}
         <Animated.View style={[styles.layoutsContainer, { height: layoutsContainerHeight }]}>
-        {/* TODO: REFACTORING */}
-          <View>
+          <View
+            style={{
+              transform: [{ rotateX: `${isShowLayouts ? '180' : '0'}deg` }],
+            }}
+          >
             <Icon
-              style={{
-                transform: [{ rotateX: '0deg' }],
-                paddingLeft: 5,
-                color: '#D4AEFF',
-                fontSize: 32,
-              }}
+              style={styles.arrow}
               onPress={this.showLayouts}
               type="MaterialIcons"
               name="keyboard-arrow-up"
             />
           </View>
-          {/* ------------ */}
           <Layouts
             isShowLayouts={isShowLayouts}
             pickLayout={this.pickLayout}
