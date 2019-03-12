@@ -1,14 +1,31 @@
 import React from 'react';
 import {
-  View, Dimensions, StyleSheet, CameraRoll, Text, Animated,
+  View,
+  Dimensions,
+  StyleSheet,
+  CameraRoll,
+  Text,
+  Animated,
+  TouchableOpacity,
 } from 'react-native';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Container, Icon, Button } from 'native-base';
 import ViewShot from 'react-native-view-shot';
 import { DynamicCollage } from '../../components/collage';
+import PhotoEditContainer from '../../components/photoEditContainer';
+
+const { height } = Dimensions.get('window');
+const durationPhotoEditContainerAnim = 300;
+const photoEditContainerHeight = height / 5;
 
 const styles = StyleSheet.create({
+  headerContainer: {
+    paddingTop: 30,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: '#E7E9EB',
+  },
   leftHeaderContainer: {
     flexDirection: 'row',
   },
@@ -16,8 +33,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   collage: {
-    borderWidth: 10,
-    borderColor: '#fff',
+    backgroundColor: '#fff',
   },
   body: {
     backgroundColor: '#E7E9EB',
@@ -38,34 +54,18 @@ const styles = StyleSheet.create({
   notificationText: {
     color: '#fff',
   },
+  bottomMenu: {
+    backgroundColor: '#E7E9EB',
+    height: height / 11,
+    paddingHorizontal: 15,
+    paddingTop: 10,
+  },
 });
 
 class Collage extends React.PureComponent {
-  static navigationOptions = ({ navigation }) => ({
-    title: null,
-    headerStyle: {
-      backgroundColor: '#E7E9EB',
-    },
-    headerTintColor: '#fff',
-    headerTransparent: true,
-    headerRight: (
-      <View>
-        <Button onPress={() => navigation.state.params.onCapture()} transparent>
-          <Icon type="AntDesign" name="totop" />
-        </Button>
-      </View>
-    ),
-    headerLeft: (
-      <View style={styles.leftHeaderContainer}>
-        <Button transparent>
-          <Icon type="AntDesign" name="close" />
-        </Button>
-        <Button onPress={() => navigation.goBack()} transparent>
-          <Icon type="AntDesign" name="back" />
-        </Button>
-      </View>
-    ),
-  })
+  static navigationOptions = {
+    header: () => null,
+  }
 
   constructor() {
     super();
@@ -74,6 +74,14 @@ class Collage extends React.PureComponent {
       opacityNotification: new Animated.Value(0),
       opacityCollageContainer: new Animated.Value(0),
       scaleCollageContainer: new Animated.Value(0),
+      translateYPhotoEditContainer: new Animated.Value(photoEditContainerHeight),
+      translateYCollage: new Animated.Value(0),
+      translateYHeader: new Animated.Value(0),
+      aspectRatioWidth: 1.2,
+      aspectRatioHeight: 1.2,
+      outerMargin: new Animated.Value(5),
+      innerMargin: 2,
+      borderRadius: new Animated.Value(0),
     };
   }
 
@@ -88,7 +96,34 @@ class Collage extends React.PureComponent {
     this.collageContainerAnim();
   }
 
-  showNotification = () => {
+  onAspectRatioChange = (value) => {
+    if (value > 2.1 / 2) {
+      this.setState({ aspectRatioHeight: value });
+    } else {
+      this.setState({ aspectRatioWidth: value });
+    }
+  }
+
+  onChangeOuterMargin = (value) => {
+    Animated.timing(this.state.outerMargin, {
+      toValue: value,
+    }).start();
+  }
+
+  onChangeInnerMargin = (value) => {
+    // Animated.timing(this.state.innerMargin, {
+    //   toValue: value,
+    // }).start();
+    this.setState({ innerMargin: value });
+  }
+
+  onChangeBorderRadius = (value) => {
+    Animated.timing(this.state.borderRadius, {
+      toValue: value,
+    }).start();
+  }
+
+  showNotificationAnim = () => {
     Animated.sequence([
       Animated.timing(this.state.opacityNotification, {
         toValue: 0.85,
@@ -115,10 +150,27 @@ class Collage extends React.PureComponent {
     ]).start();
   }
 
+  showPhotoEditContainer = (translateYPhotoEditContainer, translateYHeader, translateYCollage) => {
+    Animated.parallel([
+      Animated.timing(this.state.translateYPhotoEditContainer, {
+        toValue: translateYPhotoEditContainer,
+        duration: durationPhotoEditContainerAnim,
+      }),
+      Animated.timing(this.state.translateYHeader, {
+        toValue: translateYHeader,
+        duration: durationPhotoEditContainerAnim,
+      }),
+      Animated.timing(this.state.translateYCollage, {
+        toValue: translateYCollage,
+        duration: durationPhotoEditContainerAnim,
+      }),
+    ]).start();
+  }
+
   onCapture = () => {
     this.refs.viewShot.capture().then((uri) => {
       CameraRoll.saveToCameraRoll(uri);
-      this.showNotification();
+      this.showNotificationAnim();
     });
   }
 
@@ -128,28 +180,59 @@ class Collage extends React.PureComponent {
       opacityNotification,
       opacityCollageContainer,
       scaleCollageContainer,
+      translateYPhotoEditContainer,
+      translateYCollage,
+      translateYHeader,
+      aspectRatioWidth,
+      aspectRatioHeight,
+      outerMargin,
+      innerMargin,
+      borderRadius,
     } = this.state;
-    const { pickedImages } = this.props;
+    const { pickedImages, navigation } = this.props;
+    const showPhotoEditContainer = () => this.showPhotoEditContainer(0, -100, -100);
+    const hidePhotoEditContainer = () => this.showPhotoEditContainer(photoEditContainerHeight, 0, 0);
+    // console.disableYellowBox = true;
     return (
-      <Container>
+      <Container style={{ backgroundColor: '#E7E9EB' }}>
+        <Animated.View
+          style={[styles.headerContainer, { transform: [{ translateY: translateYHeader }] }]}
+        >
+          <View style={styles.leftHeaderContainer}>
+            <Button transparent>
+              <Icon type="AntDesign" name="close" />
+            </Button>
+            <Button onPress={() => navigation.goBack()} transparent>
+              <Icon type="AntDesign" name="back" />
+            </Button>
+          </View>
+          <View>
+            <Button onPress={() => navigation.state.params.onCapture()} transparent>
+              <Icon type="AntDesign" name="totop" />
+            </Button>
+          </View>
+        </Animated.View>
         <View style={styles.body}>
           <Animated.View
             style={[
               styles.collageContainer,
               {
                 opacity: opacityCollageContainer,
-                transform: [{ scale: scaleCollageContainer }],
+                transform: [{ scale: scaleCollageContainer }, { translateY: translateYCollage }],
               },
             ]}
           >
             <ViewShot ref="viewShot">
               <DynamicCollage
-                width={Dimensions.get('window').width / 1.1}
-                height={Dimensions.get('window').width / 1.1}
-                direction={currentLayout.direction}
-                images={pickedImages}
-                matrix={currentLayout.matrix}
+                width={Dimensions.get('window').width / aspectRatioWidth}
+                height={Dimensions.get('window').width / aspectRatioHeight}
+                direction={currentLayout.direction || 'row'}
+                images={pickedImages || []}
+                matrix={currentLayout.matrix || [1, 1]}
                 containerStyle={styles.collage}
+                outerMargin={outerMargin}
+                innerMargin={innerMargin}
+                borderRadius={borderRadius}
               />
             </ViewShot>
           </Animated.View>
@@ -157,6 +240,19 @@ class Collage extends React.PureComponent {
             <Text style={styles.notificationText}>Photo saved to Camera Roll</Text>
           </Animated.View>
         </View>
+        <View style={styles.bottomMenu}>
+          <TouchableOpacity onPress={showPhotoEditContainer}>
+            <Icon type="Ionicons" name="ios-qr-scanner" />
+          </TouchableOpacity>
+        </View>
+        <PhotoEditContainer
+          onAspectRatioChange={this.onAspectRatioChange}
+          onChangeOuterMargin={this.onChangeOuterMargin}
+          onChangeInnerMargin={this.onChangeInnerMargin}
+          onChangeBorderRadius={this.onChangeBorderRadius}
+          hidePhotoEditContainer={hidePhotoEditContainer}
+          translateYPhotoEditContainer={translateYPhotoEditContainer}
+        />
       </Container>
     );
   }

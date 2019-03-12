@@ -465,7 +465,7 @@ class CollageImage extends React.PureComponent {
   }
 
   render() {
-    const { source, style, imageSelectedStyle } = this.props;
+    const { source, style, imageSelectedStyle, innerMargin, borderRadius } = this.props;
     const {
       panningX,
       panningY,
@@ -481,22 +481,25 @@ class CollageImage extends React.PureComponent {
     const bottom = animating ? this.animatedY : panningY;
 
     return (
-      <View
+      <Animated.View
         ref="imageContainer"
         style={{
           flex: 1,
           overflow: 'hidden',
           transform: [{ translateX: -translateX }, { translateY: -translateY }],
-          borderWidth: 2,
-          borderColor: 'white',
+          borderWidth: 4,
+          borderColor: '#fff',
+          borderRadius
         }}
       >
-        <View
+        <Animated.View
           style={{
             flex: 1,
             flexDirection: 'row',
             width,
             height,
+            borderWidth: innerMargin,
+            borderColor: '#fff',
           }}
           {...this._panResponder.panHandlers}
         >
@@ -515,8 +518,8 @@ class CollageImage extends React.PureComponent {
             ]}
             resizeMode="cover"
           />
-        </View>
-      </View>
+        </Animated.View>
+      </Animated.View>
     );
   }
 }

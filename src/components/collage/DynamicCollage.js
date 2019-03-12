@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  View, Image, StyleSheet, TouchableOpacity,
+  View, Image, StyleSheet, TouchableOpacity, Animated,
 } from 'react-native';
 import PropTypes from 'prop-types';
 
@@ -11,8 +11,9 @@ const backgroundColor = '#E86571';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    margin: 1,
-    borderRadius: 2,
+    // margin: 10,
+    // borderRadius: 2,
+    // borderColor: '#fff'
   },
   item: {
     flex: 1,
@@ -40,6 +41,8 @@ class DynamicCollage extends React.PureComponent {
       retainScaleOnSwap,
       longPressDelay,
       longPressSensitivity,
+      innerMargin,
+      borderRadius,
     } = this.props;
     const { collageOffsetX, collageOffsetY } = this.state;
 
@@ -53,7 +56,6 @@ class DynamicCollage extends React.PureComponent {
       imagesArr.length = countPhoto;
       imagesArr.fill(null, this.props.images.length);
       const images = imagesArr.slice(startIndex, startIndex + element).map((image, i) => {
-        // Determines if the source is a URL, or local asset
         if (!image) {
           return (
             <TouchableOpacity onPress={() => alert('add photo')} key={i} style={[styles.container]}>
@@ -88,21 +90,31 @@ class DynamicCollage extends React.PureComponent {
             longPressSensitivity={longPressSensitivity}
             collageOffsetX={collageOffsetX}
             collageOffsetY={collageOffsetY}
+            borderRadius={borderRadius}
           />
         );
       });
 
       return (
-        <View key={m} ref={`matrix${m}`} style={{ flex: 1, flexDirection: sectionDirection }}>
+        <Animated.View
+          key={m}
+          ref={`matrix${m}`}
+          style={{
+            flex: 1,
+            flexDirection: sectionDirection,
+            borderColor: '#fff',
+            borderWidth: innerMargin,
+          }}
+        >
           {images}
-        </View>
+        </Animated.View>
       );
     });
   }
 
   render() {
     const {
-      width, height, matrix, direction, containerStyle,
+      width, height, matrix, direction, containerStyle, outerMargin,
     } = this.props;
     const { images, collageWidth, collageHeight } = this.state;
 
@@ -114,8 +126,8 @@ class DynamicCollage extends React.PureComponent {
     // }
 
     return (
-      <View
-        style={[{ width, height }, containerStyle]}
+      <Animated.View
+        style={[{ width, height }, containerStyle, { padding: outerMargin }]}
         onLayout={(event) => {
           this.setState({
             collageWidth: event.nativeEvent.layout.width,
@@ -128,7 +140,7 @@ class DynamicCollage extends React.PureComponent {
         <View style={{ flex: 1, flexDirection: direction }}>
           {collageWidth !== null && collageHeight !== null ? this.renderMatrix() : null}
         </View>
-      </View>
+      </Animated.View>
     );
   }
 
@@ -310,7 +322,7 @@ DynamicCollage.defaultProps = {
   // STYLE OF SEPARATORS ON THE COLLAGE
   separatorStyle: {
     borderWidth: 2,
-    borderColor: 'white',
+    borderColor: '#fff',
   },
 
   // IMAGE SELECTED
