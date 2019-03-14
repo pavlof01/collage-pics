@@ -6,8 +6,10 @@ import {
   StyleSheet,
   Animated,
   TouchableWithoutFeedback,
+  TouchableOpacity
 } from 'react-native';
 import PropTypes from 'prop-types';
+import { getAssetFileAbsolutePath, startEdit } from '../../helpers'
 
 class CollageImage extends React.PureComponent {
   constructor(props) {
@@ -69,12 +71,15 @@ class CollageImage extends React.PureComponent {
     this.scaling = false;
     this.deltaScaling = 0;
 
+    this.onPanResponderGrantTimeClick = null;
+
     this._panResponder = PanResponder.create({
       onStartShouldSetPanResponder: (evt, gestureState) => true,
       onStartShouldSetPanResponderCapture: (evt, gestureState) => true,
       onMoveShouldSetPanResponder: (evt, gestureState) => true,
       onMoveShouldSetPanResponderCapture: (evt, gestureState) => true,
       onPanResponderGrant: (e, gestureState) => {
+        this.onPanResponderGrantTimeClick = Date.now()
         this.onLongPressTimeout = setTimeout(() => {
           this.setState({ selected: true }, () => {
             this.props.translationStartCallback(this);
@@ -236,6 +241,12 @@ class CollageImage extends React.PureComponent {
         }
       },
       onPanResponderEnd: (e, gestureState) => {
+        const isJustClick = Date.now() - this.onPanResponderGrantTimeClick <200
+        if (isJustClick){
+          getAssetFileAbsolutePath(this.props.source.uri).then(path => {
+            startEdit(path)
+          })
+        }
         // Disable scaling, and panning
         this.panning = false;
         this.scaling = false;

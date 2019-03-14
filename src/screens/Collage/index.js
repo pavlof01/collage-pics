@@ -7,15 +7,19 @@ import {
   Text,
   Animated,
   TouchableOpacity,
+  NativeModules,
+  NativeEventEmitter,
 } from 'react-native';
 import { connect } from 'react-redux';
+import RNFS from 'react-native-fs';
 import PropTypes from 'prop-types';
 import { Container, Icon, Button } from 'native-base';
 import ViewShot from 'react-native-view-shot';
 import { DynamicCollage } from '../../components/collage';
 import PhotoEditContainer from '../../components/photoEditContainer';
 
-const { height } = Dimensions.get('window');
+const { PESDK } = NativeModules;
+const { height, width } = Dimensions.get('window');
 const durationPhotoEditContainerAnim = 300;
 const photoEditContainerHeight = height / 5;
 
@@ -77,18 +81,48 @@ class Collage extends React.PureComponent {
       translateYPhotoEditContainer: new Animated.Value(photoEditContainerHeight),
       translateYCollage: new Animated.Value(0),
       translateYHeader: new Animated.Value(0),
-      aspectRatioWidth: 1.2,
-      aspectRatioHeight: 1.2,
+      aspectRatioWidth: 1.1,
+      aspectRatioHeight: 1.1,
       outerMargin: new Animated.Value(5),
       innerMargin: 2,
       borderRadius: new Animated.Value(0),
     };
+    this.sliderValue = null;
   }
 
   componentWillMount = () => {
     const { navigation } = this.props;
     const currentLayout = navigation.getParam('layout', []);
     this.setState({ currentLayout });
+    this.eventEmitter = new NativeEventEmitter(NativeModules.PESDK);
+    this.eventEmitter.addListener('PhotoEditorDidCancel', () => {
+      console.warn("PhotoEditorDidCancel")
+      // The photo editor was cancelled.
+      // Delete photo from tmp
+      // const { currentPhotoPath } = this.state;
+      // RNFS.exists(currentPhotoPath).then((res) => {
+      //   if (res) {
+      //     RNFS.unlink(currentPhotoPath)
+      //       .then(() => console.warn('FILE DELETED'))
+      //       .catch(err => console.warn(err));
+      //   }
+      // });
+      // Alert.alert('PESDK did Cancel', '...do what you need to do.', { cancelable: true });
+    });
+    this.eventEmitter.addListener('PhotoEditorDidSave', (body) => {
+      console.warn("PhotoEditorDidSave")
+      // The body contains the edited image in JPEG and NSData representation and
+      const path = `${RNFS.TemporaryDirectoryPath}test.jpg`
+      RNFS.writeFile(path,body.image,'base64').then(() => {
+        console.warn(path);
+        // CameraRoll.saveToCameraRoll(path)
+      })
+    });
+    this.eventEmitter.addListener('PhotoEditorDidFailToGeneratePhoto', () => {
+      console.warn("PhotoEditorDidFailToGeneratePhoto")
+      // The photo editor could not create a photo.
+      // Alert.alert('PESDK did Fail to generate a photo.', 'Please try again.', { cancelable: true });
+    });
   }
 
   componentDidMount = () => {
@@ -97,11 +131,36 @@ class Collage extends React.PureComponent {
   }
 
   onAspectRatioChange = (value) => {
-    if (value > 2.1 / 2) {
-      this.setState({ aspectRatioHeight: value });
+    const { aspectRatioHeight, aspectRatioWidth } = this.state;
+    // console.warn(aspectRatioHeight);
+    const valH = 0.05;
+    const valW = 0.05;
+    if (this.sliderValue > value) {
+      if (aspectRatioWidth >= 1.1) {
+        this.setState({
+          aspectRatioHeight: this.state.aspectRatioHeight + valH,
+          // aspectRatioWidth: this.state.aspectRatioWidth - valW,
+        });
+      } else {
+        this.setState({
+          aspectRatioHeight: this.state.aspectRatioHeight + valH,
+          aspectRatioWidth: this.state.aspectRatioWidth - valW,
+        });
+      }
     } else {
-      this.setState({ aspectRatioWidth: value });
+      if (aspectRatioHeight >= 1.1) {
+        this.setState({
+          // aspectRatioHeight: this.state.aspectRatioHeight - valH,
+          aspectRatioWidth: this.state.aspectRatioWidth + valW,
+        });
+      } else {
+        this.setState({
+          aspectRatioHeight: this.state.aspectRatioHeight - valH,
+          aspectRatioWidth: this.state.aspectRatioWidth + valW,
+        });
+      }
     }
+    this.sliderValue = value;
   }
 
   onChangeOuterMargin = (value) => {
@@ -169,8 +228,9 @@ class Collage extends React.PureComponent {
 
   onCapture = () => {
     this.refs.viewShot.capture().then((uri) => {
-      CameraRoll.saveToCameraRoll(uri);
-      this.showNotificationAnim();
+      PESDK.present(uri);
+      // CameraRoll.saveToCameraRoll(uri);
+      // this.showNotificationAnim();
     });
   }
 
@@ -224,8 +284,8 @@ class Collage extends React.PureComponent {
           >
             <ViewShot ref="viewShot">
               <DynamicCollage
-                width={Dimensions.get('window').width / aspectRatioWidth}
-                height={Dimensions.get('window').width / aspectRatioHeight}
+                width={width / aspectRatioWidth}
+                height={width / aspectRatioHeight}
                 direction={currentLayout.direction || 'row'}
                 images={pickedImages || []}
                 matrix={currentLayout.matrix || [1, 1]}
@@ -241,11 +301,10 @@ class Collage extends React.PureComponent {
           </Animated.View>
         </View>
         <View style={styles.bottomMenu}>
-          <TouchableOpacity onPress={showPhotoEditContainer}>
+          {/* <TouchableOpacity onPress={showPhotoEditContainer}>
             <Icon type="Ionicons" name="ios-qr-scanner" />
-          </TouchableOpacity>
-        </View>
-        <PhotoEditContainer
+          </TouchableOpacity> */}
+          <PhotoEditContainer
           onAspectRatioChange={this.onAspectRatioChange}
           onChangeOuterMargin={this.onChangeOuterMargin}
           onChangeInnerMargin={this.onChangeInnerMargin}
@@ -253,6 +312,15 @@ class Collage extends React.PureComponent {
           hidePhotoEditContainer={hidePhotoEditContainer}
           translateYPhotoEditContainer={translateYPhotoEditContainer}
         />
+        </View>
+        {/* <PhotoEditContainer
+          onAspectRatioChange={this.onAspectRatioChange}
+          onChangeOuterMargin={this.onChangeOuterMargin}
+          onChangeInnerMargin={this.onChangeInnerMargin}
+          onChangeBorderRadius={this.onChangeBorderRadius}
+          hidePhotoEditContainer={hidePhotoEditContainer}
+          translateYPhotoEditContainer={translateYPhotoEditContainer}
+        /> */}
       </Container>
     );
   }

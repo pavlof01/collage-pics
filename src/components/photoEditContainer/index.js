@@ -73,10 +73,10 @@ export default class PhotoEditContainer extends Component {
         return (
           <CommonSlider
             title="ASPECT RATIO"
-            minimumValue={0.1}
-            maximumValue={2.1}
-            step={0.01}
-            value={2.1 / 2}
+            minimumValue={0}
+            maximumValue={2}
+            step={0.1}
+            value={1}
             onSliderChange={onAspectRatioChange}
           />
         );
@@ -134,7 +134,7 @@ export default class PhotoEditContainer extends Component {
     const { translateYPhotoEditContainer, hidePhotoEditContainer, onAspectRatioChange } = this.props;
     return (
       <Animated.View
-        style={[styles.photoEdit, { transform: [{ translateY: translateYPhotoEditContainer }] }]}
+        style={[styles.photoEdit, { transform: [{ translateY: 0 /* translateYPhotoEditContainer */ }] }]}
       >
         <View style={styles.photoEditContainer}>
           {/* <CommonSlider onSliderChange={onAspectRatioChange} /> */}

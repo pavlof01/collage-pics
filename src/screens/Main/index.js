@@ -16,6 +16,7 @@ import { connect } from 'react-redux';
 import {
   Container, Tab, Tabs, ScrollableTab, Icon,
 } from 'native-base';
+import RNFS from 'react-native-fs';
 import { isIphoneX } from 'react-native-iphone-x-helper';
 import PropTypes from 'prop-types';
 import { addPhoto } from '../../actions/pickImages';
@@ -24,8 +25,6 @@ import Layouts from '../Layouts';
 import PhotoSelectedBottomMenu from '../../components/photoSelectedBottomMenu';
 
 const { PESDK } = NativeModules;
-const RNFS = require('react-native-fs');
-
 const { width, height } = Dimensions.get('window');
 const showPhotoCountSelectedDurationAnim = 150;
 const expandLayoutsDurationAnim = 300;
@@ -90,38 +89,45 @@ class Main extends React.Component {
   }
 
   componentWillMount = () => {
-    this.eventEmitter = new NativeEventEmitter(NativeModules.PESDK);
-    this.eventEmitter.addListener('PhotoEditorDidCancel', () => {
-      // The photo editor was cancelled.
-      // Delete photo from tmp
-      const { currentPhotoPath } = this.state;
-      RNFS.exists(currentPhotoPath).then((res) => {
-        if (res) {
-          RNFS.unlink(currentPhotoPath)
-            .then(() => console.warn('FILE DELETED'))
-            .catch(err => console.warn(err));
-        }
-      });
-      // Alert.alert('PESDK did Cancel', '...do what you need to do.', { cancelable: true });
-    });
-    this.eventEmitter.addListener('PhotoEditorDidSave', (body) => {
-      // The body contains the edited image in JPEG and NSData representation and
-      const path = `${RNFS.TemporaryDirectoryPath}test.jpg`
-      RNFS.writeFile(path,body.image,'base64').then(() => {
-        CameraRoll.saveToCameraRoll(path)
-      })
-    });
-    this.eventEmitter.addListener('PhotoEditorDidFailToGeneratePhoto', () => {
-      // The photo editor could not create a photo.
-      Alert.alert('PESDK did Fail to generate a photo.', 'Please try again.', { cancelable: true });
-    });
+    // this.eventEmitter = new NativeEventEmitter(NativeModules.PESDK);
+    // this.eventEmitter.addListener('PhotoEditorDidCancel', () => {
+    //   // The photo editor was cancelled.
+    //   // Delete photo from tmp
+    //   const { currentPhotoPath } = this.state;
+    //   RNFS.exists(currentPhotoPath).then((res) => {
+    //     if (res) {
+    //       RNFS.unlink(currentPhotoPath)
+    //         .then(() => console.warn('FILE DELETED'))
+    //         .catch(err => console.warn(err));
+    //     }
+    //   });
+    //   // Alert.alert('PESDK did Cancel', '...do what you need to do.', { cancelable: true });
+    // });
+    // this.eventEmitter.addListener('PhotoEditorDidSave', (body) => {
+    //   // The body contains the edited image in JPEG and NSData representation and
+    //   const path = `${RNFS.TemporaryDirectoryPath}test.jpg`
+    //   RNFS.writeFile(path,body.image,'base64').then(() => {
+    //     CameraRoll.saveToCameraRoll(path)
+    //   })
+    // });
+    // this.eventEmitter.addListener('PhotoEditorDidFailToGeneratePhoto', () => {
+    //   // The photo editor could not create a photo.
+    //   Alert.alert('PESDK did Fail to generate a photo.', 'Please try again.', { cancelable: true });
+    // });
   }
 
   componentDidMount = () => {
     const albums = {};
+    // let i = 0
     CameraRoll.getPhotos({ groupTypes: 'All', first: 20000 })
       .then((images) => {
         images.edges.forEach(({ node }) => {
+          // i+=1
+          // if (i<=4){
+          //   this.props.addPhotoItem(node.image.uri)
+          // }else {
+          //   return this.props.navigation.navigate('Collage', { layout: { direction: 'row', matrix: [2,2] }, });
+          // }
           if (albums.hasOwnProperty(node.group_name)) {
             //eslint-disable-line
             albums[node.group_name].push(node);
@@ -137,17 +143,17 @@ class Main extends React.Component {
   renderImageItem = ({ item }) => <Photo onPressImage={this.pickImage} photo={item} />
 
   pickImage = (uri) => {
-    this.getAssetFileAbsolutePath(uri).then((path) => {
-      this.setState({ currentPhotoPath: path });
-      PESDK.present(path);
-    });
+    this.props.addPhotoItem(uri)
+    // this.getAssetFileAbsolutePath(uri).then((path) => {
+    //   this.setState({ currentPhotoPath: path });
+    //   PESDK.present(path);
+    // });
   }
 
   getAssetFileAbsolutePath = async (assetPath) => {
     const dest = `${RNFS.TemporaryDirectoryPath}${Math.random()
       .toString(36)
       .substring(7)}.jpg`;
-
     try {
       const absolutePath = await RNFS.copyAssetsFileIOS(assetPath, dest, 0, 0);
       return absolutePath;
