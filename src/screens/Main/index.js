@@ -9,6 +9,8 @@ import {
   View,
   StatusBar,
   Animated,
+  NativeModules,
+  NativeEventEmitter,
 } from 'react-native';
 import { connect } from 'react-redux';
 import {
@@ -20,6 +22,9 @@ import { addPhoto } from '../../actions/pickImages';
 import Photo from '../../components/photo';
 import Layouts from '../Layouts';
 import PhotoSelectedBottomMenu from '../../components/photoSelectedBottomMenu';
+
+const { PESDK } = NativeModules;
+const RNFS = require('react-native-fs');
 
 const { width, height } = Dimensions.get('window');
 const showPhotoCountSelectedDurationAnim = 150;
@@ -80,7 +85,36 @@ class Main extends React.Component {
       layoutsContainerHeight: new Animated.Value(unExpandLayoutsHeight),
       isShowLayouts: false,
       isPickedPhotos: false,
+      currentPhotoPath: null,
     };
+  }
+
+  componentWillMount = () => {
+    this.eventEmitter = new NativeEventEmitter(NativeModules.PESDK);
+    this.eventEmitter.addListener('PhotoEditorDidCancel', () => {
+      // The photo editor was cancelled.
+      // Delete photo from tmp
+      const { currentPhotoPath } = this.state;
+      RNFS.exists(currentPhotoPath).then((res) => {
+        if (res) {
+          RNFS.unlink(currentPhotoPath)
+            .then(() => console.warn('FILE DELETED'))
+            .catch(err => console.warn(err));
+        }
+      });
+      // Alert.alert('PESDK did Cancel', '...do what you need to do.', { cancelable: true });
+    });
+    this.eventEmitter.addListener('PhotoEditorDidSave', (body) => {
+      // The body contains the edited image in JPEG and NSData representation and
+      const path = `${RNFS.TemporaryDirectoryPath}test.jpg`
+      RNFS.writeFile(path,body.image,'base64').then(() => {
+        CameraRoll.saveToCameraRoll(path)
+      })
+    });
+    this.eventEmitter.addListener('PhotoEditorDidFailToGeneratePhoto', () => {
+      // The photo editor could not create a photo.
+      Alert.alert('PESDK did Fail to generate a photo.', 'Please try again.', { cancelable: true });
+    });
   }
 
   componentDidMount = () => {
@@ -102,7 +136,25 @@ class Main extends React.Component {
 
   renderImageItem = ({ item }) => <Photo onPressImage={this.pickImage} photo={item} />
 
-  pickImage = uri => this.props.addPhotoItem(uri)
+  pickImage = (uri) => {
+    this.getAssetFileAbsolutePath(uri).then((path) => {
+      this.setState({ currentPhotoPath: path });
+      PESDK.present(path);
+    });
+  }
+
+  getAssetFileAbsolutePath = async (assetPath) => {
+    const dest = `${RNFS.TemporaryDirectoryPath}${Math.random()
+      .toString(36)
+      .substring(7)}.jpg`;
+
+    try {
+      const absolutePath = await RNFS.copyAssetsFileIOS(assetPath, dest, 0, 0);
+      return absolutePath;
+    } catch (err) {
+      console.warn(err);
+    }
+  }
 
   pickLayout = (layout) => {
     this.setState({ currentLayout: layout });
