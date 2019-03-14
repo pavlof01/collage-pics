@@ -8,4 +8,5 @@ target 'collagePics' do
   # Pods for PESDKDemo
     pod 'PhotoEditorSDK'
 
+
 end
