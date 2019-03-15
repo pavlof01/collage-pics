@@ -94,35 +94,35 @@ class Collage extends React.PureComponent {
     const { navigation } = this.props;
     const currentLayout = navigation.getParam('layout', []);
     this.setState({ currentLayout });
-    this.eventEmitter = new NativeEventEmitter(NativeModules.PESDK);
-    this.eventEmitter.addListener('PhotoEditorDidCancel', () => {
-      console.warn("PhotoEditorDidCancel")
-      // The photo editor was cancelled.
-      // Delete photo from tmp
-      // const { currentPhotoPath } = this.state;
-      // RNFS.exists(currentPhotoPath).then((res) => {
-      //   if (res) {
-      //     RNFS.unlink(currentPhotoPath)
-      //       .then(() => console.warn('FILE DELETED'))
-      //       .catch(err => console.warn(err));
-      //   }
-      // });
-      // Alert.alert('PESDK did Cancel', '...do what you need to do.', { cancelable: true });
-    });
-    this.eventEmitter.addListener('PhotoEditorDidSave', (body) => {
-      console.warn("PhotoEditorDidSave")
-      // The body contains the edited image in JPEG and NSData representation and
-      const path = `${RNFS.TemporaryDirectoryPath}test.jpg`
-      RNFS.writeFile(path,body.image,'base64').then(() => {
-        console.warn(path);
-        // CameraRoll.saveToCameraRoll(path)
-      })
-    });
-    this.eventEmitter.addListener('PhotoEditorDidFailToGeneratePhoto', () => {
-      console.warn("PhotoEditorDidFailToGeneratePhoto")
-      // The photo editor could not create a photo.
-      // Alert.alert('PESDK did Fail to generate a photo.', 'Please try again.', { cancelable: true });
-    });
+    // this.eventEmitter = new NativeEventEmitter(NativeModules.PESDK);
+    // this.eventEmitter.addListener('PhotoEditorDidCancel', () => {
+    //   console.warn("PhotoEditorDidCancel")
+    //   // The photo editor was cancelled.
+    //   // Delete photo from tmp
+    //   // const { currentPhotoPath } = this.state;
+    //   // RNFS.exists(currentPhotoPath).then((res) => {
+    //   //   if (res) {
+    //   //     RNFS.unlink(currentPhotoPath)
+    //   //       .then(() => console.warn('FILE DELETED'))
+    //   //       .catch(err => console.warn(err));
+    //   //   }
+    //   // });
+    //   // Alert.alert('PESDK did Cancel', '...do what you need to do.', { cancelable: true });
+    // });
+    // this.eventEmitter.addListener('PhotoEditorDidSave', (body) => {
+    //   console.warn("PhotoEditorDidSave")
+    //   // The body contains the edited image in JPEG and NSData representation and
+    //   const path = `${RNFS.TemporaryDirectoryPath}test.jpg`
+    //   RNFS.writeFile(path,body.image,'base64').then(() => {
+    //     console.warn(path);
+    //     // CameraRoll.saveToCameraRoll(path)
+    //   })
+    // });
+    // this.eventEmitter.addListener('PhotoEditorDidFailToGeneratePhoto', () => {
+    //   console.warn("PhotoEditorDidFailToGeneratePhoto")
+    //   // The photo editor could not create a photo.
+    //   // Alert.alert('PESDK did Fail to generate a photo.', 'Please try again.', { cancelable: true });
+    // });
   }
 
   componentDidMount = () => {

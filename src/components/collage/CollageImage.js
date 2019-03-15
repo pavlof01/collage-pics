@@ -1,15 +1,20 @@
 import React from 'react';
 import {
-  View,
   Image,
   PanResponder,
-  StyleSheet,
   Animated,
-  TouchableWithoutFeedback,
-  TouchableOpacity
+  TouchableOpacity,
+  NativeModules,
+  NativeEventEmitter,
 } from 'react-native';
 import PropTypes from 'prop-types';
-import { getAssetFileAbsolutePath, startEdit } from '../../helpers'
+import RNFS from 'react-native-fs';
+import {
+  getAssetFileAbsolutePath,
+  startEdit,
+  deleteTemporaryPhoto,
+  TemporaryDirectoryPath,
+} from '../../helpers';
 
 class CollageImage extends React.PureComponent {
   constructor(props) {
@@ -31,6 +36,8 @@ class CollageImage extends React.PureComponent {
       srcWidth: 0,
       srcHeight: 0,
       ratio: 0,
+      source: props.source,
+      photoEditPath: null,
     };
 
     // PANNING
@@ -73,13 +80,28 @@ class CollageImage extends React.PureComponent {
 
     this.onPanResponderGrantTimeClick = null;
 
+    this.eventEmitter = new NativeEventEmitter(NativeModules.PESDK);
+
     this._panResponder = PanResponder.create({
       onStartShouldSetPanResponder: (evt, gestureState) => true,
       onStartShouldSetPanResponderCapture: (evt, gestureState) => true,
       onMoveShouldSetPanResponder: (evt, gestureState) => true,
       onMoveShouldSetPanResponderCapture: (evt, gestureState) => true,
       onPanResponderGrant: (e, gestureState) => {
-        this.onPanResponderGrantTimeClick = Date.now()
+        this.eventEmitter.addListener('PhotoEditorDidCancel', () => {
+          deleteTemporaryPhoto(this.state.photoEditPath);
+        });
+        this.eventEmitter.addListener('PhotoEditorDidSave', (body) => {
+          const path = `${TemporaryDirectoryPath}${Math.random()
+            .toString(36)
+            .substring(7)}.jpg`;
+          RNFS.writeFile(path, body.image, 'base64').then(() => {
+            this.setState({ source: { uri: path } });
+            deleteTemporaryPhoto(this.state.photoEditPath);
+            // CameraRoll.saveToCameraRoll(path);
+          });
+        });
+        this.onPanResponderGrantTimeClick = Date.now();
         this.onLongPressTimeout = setTimeout(() => {
           this.setState({ selected: true }, () => {
             this.props.translationStartCallback(this);
@@ -241,11 +263,12 @@ class CollageImage extends React.PureComponent {
         }
       },
       onPanResponderEnd: (e, gestureState) => {
-        const isJustClick = Date.now() - this.onPanResponderGrantTimeClick <200
-        if (isJustClick){
-          getAssetFileAbsolutePath(this.props.source.uri).then(path => {
-            startEdit(path)
-          })
+        const isJustClick = Date.now() - this.onPanResponderGrantTimeClick < 200;
+        if (isJustClick) {
+          getAssetFileAbsolutePath(this.state.source.uri).then((path) => {
+            this.setState({ photoEditPath: path });
+            startEdit(path);
+          });
         }
         // Disable scaling, and panning
         this.panning = false;
@@ -391,7 +414,7 @@ class CollageImage extends React.PureComponent {
    * @param keepScale {bool} Keeps the scale of the image, does not try to adjust to container size
    */
   calculateImageSize(targetWidth = null, targetHeight = null, keepScale = false) {
-    Image.getSize(this.props.source.uri, (width, height) => {
+    Image.getSize(this.state.source.uri, (width, height) => {
       // SCALE IMAGE TO FIT THE CONTAINER
       const { imageWidth, imageHeight } = this.calculateAspectRatioFit(
         targetWidth || width,
@@ -476,7 +499,10 @@ class CollageImage extends React.PureComponent {
   }
 
   render() {
-    const { source, style, imageSelectedStyle, innerMargin, borderRadius } = this.props;
+    const { source } = this.state;
+    const {
+      style, imageSelectedStyle, innerMargin, borderRadius,
+    } = this.props;
     const {
       panningX,
       panningY,
@@ -500,7 +526,7 @@ class CollageImage extends React.PureComponent {
           transform: [{ translateX: -translateX }, { translateY: -translateY }],
           borderWidth: 4,
           borderColor: '#fff',
-          borderRadius
+          borderRadius,
         }}
       >
         <Animated.View
