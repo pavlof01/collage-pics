@@ -90,8 +90,12 @@ class CollageImage extends React.PureComponent {
       onPanResponderGrant: (e, gestureState) => {
         this.eventEmitter.addListener('PhotoEditorDidCancel', () => {
           deleteTemporaryPhoto(this.state.photoEditPath);
+          this.eventEmitter.removeAllListeners('PhotoEditorDidCancel');
+          this.eventEmitter.removeAllListeners('PhotoEditorDidSave');
         });
         this.eventEmitter.addListener('PhotoEditorDidSave', (body) => {
+          this.eventEmitter.removeAllListeners('PhotoEditorDidCancel');
+          this.eventEmitter.removeAllListeners('PhotoEditorDidSave');
           const path = `${TemporaryDirectoryPath}${Math.random()
             .toString(36)
             .substring(7)}.jpg`;

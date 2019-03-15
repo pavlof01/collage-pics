@@ -4,6 +4,7 @@ import {
   Dimensions,
   StyleSheet,
   CameraRoll,
+  Alert,
   Text,
   Animated,
   TouchableOpacity,
@@ -17,6 +18,7 @@ import { Container, Icon, Button } from 'native-base';
 import ViewShot from 'react-native-view-shot';
 import { DynamicCollage } from '../../components/collage';
 import PhotoEditContainer from '../../components/photoEditContainer';
+import { deleteTemporaryPhoto } from '../../helpers';
 
 const { PESDK } = NativeModules;
 const { height, width } = Dimensions.get('window');
@@ -74,6 +76,7 @@ class Collage extends React.PureComponent {
   constructor() {
     super();
     this.state = {
+      collagePath: null,
       currentLayout: { direction: 'row', matrix: [] },
       opacityNotification: new Animated.Value(0),
       opacityCollageContainer: new Animated.Value(0),
@@ -94,35 +97,6 @@ class Collage extends React.PureComponent {
     const { navigation } = this.props;
     const currentLayout = navigation.getParam('layout', []);
     this.setState({ currentLayout });
-    // this.eventEmitter = new NativeEventEmitter(NativeModules.PESDK);
-    // this.eventEmitter.addListener('PhotoEditorDidCancel', () => {
-    //   console.warn("PhotoEditorDidCancel")
-    //   // The photo editor was cancelled.
-    //   // Delete photo from tmp
-    //   // const { currentPhotoPath } = this.state;
-    //   // RNFS.exists(currentPhotoPath).then((res) => {
-    //   //   if (res) {
-    //   //     RNFS.unlink(currentPhotoPath)
-    //   //       .then(() => console.warn('FILE DELETED'))
-    //   //       .catch(err => console.warn(err));
-    //   //   }
-    //   // });
-    //   // Alert.alert('PESDK did Cancel', '...do what you need to do.', { cancelable: true });
-    // });
-    // this.eventEmitter.addListener('PhotoEditorDidSave', (body) => {
-    //   console.warn("PhotoEditorDidSave")
-    //   // The body contains the edited image in JPEG and NSData representation and
-    //   const path = `${RNFS.TemporaryDirectoryPath}test.jpg`
-    //   RNFS.writeFile(path,body.image,'base64').then(() => {
-    //     console.warn(path);
-    //     // CameraRoll.saveToCameraRoll(path)
-    //   })
-    // });
-    // this.eventEmitter.addListener('PhotoEditorDidFailToGeneratePhoto', () => {
-    //   console.warn("PhotoEditorDidFailToGeneratePhoto")
-    //   // The photo editor could not create a photo.
-    //   // Alert.alert('PESDK did Fail to generate a photo.', 'Please try again.', { cancelable: true });
-    // });
   }
 
   componentDidMount = () => {
@@ -147,18 +121,16 @@ class Collage extends React.PureComponent {
           aspectRatioWidth: this.state.aspectRatioWidth - valW,
         });
       }
+    } else if (aspectRatioHeight >= 1.1) {
+      this.setState({
+        // aspectRatioHeight: this.state.aspectRatioHeight - valH,
+        aspectRatioWidth: this.state.aspectRatioWidth + valW,
+      });
     } else {
-      if (aspectRatioHeight >= 1.1) {
-        this.setState({
-          // aspectRatioHeight: this.state.aspectRatioHeight - valH,
-          aspectRatioWidth: this.state.aspectRatioWidth + valW,
-        });
-      } else {
-        this.setState({
-          aspectRatioHeight: this.state.aspectRatioHeight - valH,
-          aspectRatioWidth: this.state.aspectRatioWidth + valW,
-        });
-      }
+      this.setState({
+        aspectRatioHeight: this.state.aspectRatioHeight - valH,
+        aspectRatioWidth: this.state.aspectRatioWidth + valW,
+      });
     }
     this.sliderValue = value;
   }
@@ -227,7 +199,28 @@ class Collage extends React.PureComponent {
   }
 
   onCapture = () => {
+    this.eventEmitter = new NativeEventEmitter(NativeModules.PESDK);
+    this.eventEmitter.removeAllListeners('PhotoEditorDidCancel');
+    this.eventEmitter.removeAllListeners('PhotoEditorDidSave');
+    this.eventEmitter.addListener('PhotoEditorDidCancel', () => {
+      deleteTemporaryPhoto(this.state.collagePath);
+      this.eventEmitter.removeAllListeners('PhotoEditorDidCancel');
+      this.eventEmitter.removeAllListeners('PhotoEditorDidSave');
+    });
+    this.eventEmitter.addListener('PhotoEditorDidSave', (body) => {
+      // The body contains the edited image in JPEG and NSData representation and
+      this.eventEmitter.removeAllListeners('PhotoEditorDidCancel');
+      this.eventEmitter.removeAllListeners('PhotoEditorDidSave');
+      const path = `${RNFS.TemporaryDirectoryPath}test.jpg`;
+      RNFS.writeFile(path, body.image, 'base64').then(() => {
+        CameraRoll.saveToCameraRoll(path);
+      });
+    });
+    this.eventEmitter.addListener('PhotoEditorDidFailToGeneratePhoto', () => {
+      Alert.alert('PESDK did Fail to generate a photo.', 'Please try again.', { cancelable: true });
+    });
     this.refs.viewShot.capture().then((uri) => {
+      this.setState({ collagePath: uri });
       PESDK.present(uri);
       // CameraRoll.saveToCameraRoll(uri);
       // this.showNotificationAnim();
@@ -305,13 +298,13 @@ class Collage extends React.PureComponent {
             <Icon type="Ionicons" name="ios-qr-scanner" />
           </TouchableOpacity> */}
           <PhotoEditContainer
-          onAspectRatioChange={this.onAspectRatioChange}
-          onChangeOuterMargin={this.onChangeOuterMargin}
-          onChangeInnerMargin={this.onChangeInnerMargin}
-          onChangeBorderRadius={this.onChangeBorderRadius}
-          hidePhotoEditContainer={hidePhotoEditContainer}
-          translateYPhotoEditContainer={translateYPhotoEditContainer}
-        />
+            onAspectRatioChange={this.onAspectRatioChange}
+            onChangeOuterMargin={this.onChangeOuterMargin}
+            onChangeInnerMargin={this.onChangeInnerMargin}
+            onChangeBorderRadius={this.onChangeBorderRadius}
+            hidePhotoEditContainer={hidePhotoEditContainer}
+            translateYPhotoEditContainer={translateYPhotoEditContainer}
+          />
         </View>
         {/* <PhotoEditContainer
           onAspectRatioChange={this.onAspectRatioChange}
